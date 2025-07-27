@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PINNLab - PINN Trainer and Visualizer</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0; 
+            padding: 20px; 
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.2em;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .section {
+            background: #f8f9fa; 
+            padding: 25px; 
+            border-radius: 8px; 
+            margin-bottom: 25px; 
+            border-left: 4px solid #007bff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .section h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #007bff;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+        .form-group { 
+            margin: 15px 0; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px;
+            position: relative;
+        }
+        label { 
+            display: inline-block; 
+            min-width: 220px; 
+            font-weight: 600; 
+            color: #333; 
+            flex-shrink: 0;
+            line-height: 1.4;
+            text-align: right;
+        }
+        input, select { 
+            padding: 10px 12px; 
+            min-width: 180px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            font-size: 14px; 
+            background: white;
+            transition: border-color 0.3s ease;
+            flex: 1;
+            max-width: 250px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        button { 
+            padding: 14px 28px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            margin: 8px; 
+            font-size: 15px; 
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover { 
+            background: #0056b3; 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        #plot { 
+            margin-top: 30px; 
+            text-align: center; 
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .error {
+            color: #dc3545;
+            text-align: center;
+            padding: 10px;
+            background: #f8d7da;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #155724;
+            text-align: center;
+            padding: 10px;
+            background: #d4edda;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .hidden {
+            display: none;
+        }
+        .architecture-config {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #b3d9ff;
+        }
+        .architecture-config h4 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #0056b3;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        .config-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 25px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+        .checkbox-group label {
+            width: auto;
+            margin-left: 5px;
+        }
+        .comparison-info {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #ffc107;
+            font-size: 14px;
+        }
+        .parameter-info {
+            background: #e7f3ff;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border-left: 4px solid #007bff;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        small {
+            display: block;
+            margin-top: 5px;
+            margin-left: 235px; /* Align with input fields */
+            font-size: 12px;
+            color: #666;
+            line-height: 1.3;
+        }
+        
+        /* Special styling for form groups with descriptions */
+        .form-group-with-desc {
+            margin: 20px 0;
+        }
+        
+        .form-group-with-desc .form-group {
+            margin: 0;
+        }
+        
+        .form-group-with-desc small {
+            margin-top: 5px;
+            margin-left: 235px;
+        }
+        
+        /* Special styling for domain configuration sections */
+        .form-group-with-desc .form-group-with-desc {
+            margin: 15px 0;
+        }
+        
+        .form-group-with-desc .form-group-with-desc .form-group {
+            margin: 0;
+        }
+        
+        .form-group-with-desc .form-group-with-desc small {
+            margin-left: 0;
+            margin-top: 5px;
+        }
+        
+        /* Progress bar styles */
+        .progress-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .progress-message {
+            color: #495057;
+            font-weight: 500;
+        }
+        
+        .progress-percentage {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .training-status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .status-training {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            .config-group {
+                grid-template-columns: 1fr;
+            }
+            .form-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            label {
+                min-width: auto;
+                margin-bottom: 8px;
+                margin-top: 0;
+                text-align: left;
+            }
+            input, select {
+                min-width: auto;
+                width: 100%;
+                max-width: none;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            small {
+                margin-left: 0;
+            }
+        }
+        
+        /* Small screen adjustments */
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            .section {
+                padding: 15px;
+            }
+            .architecture-config {
+                padding: 15px;
+            }
+        }
+        
+        /* Smooth transitions for better UX */
+        .section, .architecture-config {
+            transition: all 0.3s ease;
+        }
+        
+        .section:hover, .architecture-config:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PINNLab - PINN Trainer and Visualizer</h1>
+        
+        <!-- Step 1: Choose Mode -->
+        <div class="section">
+            <h3>Step 1: Choose Mode</h3>
+            <div class="form-group">
+                <label>Mode:</label>
+                <select id="mode" onchange="toggleMode()">
+                    <option value="">Select Mode</option>
+                    <option value="pretrained">Use Pretrained Model</option>
+                    <option value="train">Train New Model</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Step 2A: Pretrained Model Selection -->
+        <div id="pretrained-section" class="section hidden">
+            <h3>Step 2: Select Pretrained Model</h3>
+            <div class="form-group">
+                <label>Model:</label>
+                <select name="pretrained_model" id="pretrained_model" onchange="updateAlphaRange()">
+                    <option value="hydro_case1">Hydrodynamics Case 1</option>
+                    <option value="hydro_case2">Hydrodynamics Case 2</option>
+                    <option value="hydro_case3">Hydrodynamics Case 3</option>
+                    <option value="mixed">Mixed Model</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Step 2B: Training Configuration -->
+        <div id="train-section" class="section hidden">
+            <h3>Step 2: Model Configuration</h3>
+            
+            <div class="form-group">
+                <label>Model Type:</label>
+                <select name="model_type" id="model_type" onchange="updateTrainingParams()">
+                    <option value="burgers">Burgers Equation</option>
+                    <option value="hydro">Hydrodynamics</option>
+                </select>
+            </div>
+
+            <div class="architecture-config">
+                <h4>Architecture Configuration</h4>
+                <div class="config-group">
+                    <div class="form-group">
+                        <label>Main PINN Neurons:</label>
+                        <input type="number" name="num_neurons" id="num_neurons" value="96" min="16" max="512">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Main PINN Layers:</label>
+                        <input type="number" name="main_pinn_layers" id="main_pinn_layers" value="5" min="1" max="20">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Main PINN Activation:</label>
+                        <select name="main_pinn_activation" id="main_pinn_activation">
+                            <option value="sin">Sin</option>
+                            <option value="tanh">Tanh</option>
+                            <option value="relu">ReLU</option>
+                            <option value="sigmoid">Sigmoid</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Use Parameter Embedding:</label>
+                        <select name="use_param_embedding" id="use_param_embedding">
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Parameter Embedding Layers:</label>
+                        <input type="number" name="param_embed_layers" id="param_embed_layers" value="2" min="1" max="10">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Parameter Embedding Neurons:</label>
+                        <input type="number" name="param_embed_neurons" id="param_embed_neurons" value="32" min="8" max="256">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Parameter Embedding Activation:</label>
+                        <select name="param_embed_activation" id="param_embed_activation">
+                            <option value="tanh">Tanh</option>
+                            <option value="relu">ReLU</option>
+                            <option value="sin">Sin</option>
+                            <option value="sigmoid">Sigmoid</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Input Embedding Layers:</label>
+                        <input type="number" name="input_embed_layers" id="input_embed_layers" value="3" min="1" max="10">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Input Embedding Neurons:</label>
+                        <input type="number" name="input_embed_neurons" id="input_embed_neurons" value="64" min="16" max="256">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Input Embedding Activation:</label>
+                        <select name="input_embed_activation" id="input_embed_activation">
+                            <option value="sin">Sin</option>
+                            <option value="tanh">Tanh</option>
+                            <option value="relu">ReLU</option>
+                            <option value="sigmoid">Sigmoid</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="architecture-config">
+                <h4>Training Configuration</h4>
+                <div class="config-group">
+                    <div class="form-group-with-desc">
+                        <div class="form-group">
+                            <label for="iteration_adam">Adam Iterations:</label>
+                            <input type="number" id="iteration_adam" name="iteration_adam" value="500" min="1" max="10000">
+                        </div>
+                        <small>Number of Adam optimization iterations</small>
+                    </div>
+                    
+                    <div class="form-group-with-desc">
+                        <div class="form-group">
+                            <label for="iteration_lbfgs">L-BFGS Iterations:</label>
+                            <input type="number" id="iteration_lbfgs" name="iteration_lbfgs" value="50" min="0" max="1000">
+                        </div>
+                        <small>Number of L-BFGS optimization iterations</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Learning Rate:</label>
+                        <input type="number" name="learning_rate" id="learning_rate" value="0.001" step="0.0001" min="0.0001" max="0.01">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Batch Size:</label>
+                        <input type="number" name="batch_size" id="batch_size" value="1000" min="100" max="5000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Number of Batches:</label>
+                        <input type="number" name="num_batches" id="num_batches" value="5" min="1" max="20">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model-specific parameters -->
+            <div id="hydro-params" class="architecture-config" style="display: none;">
+                <h4>Hydrodynamics Parameters</h4>
+                <div class="config-group">
+                    <div class="form-group">
+                        <label>Wavelength (lam):</label>
+                        <input type="number" name="lam" id="lam" value="7.0" step="0.1" min="1.0" max="20.0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Density (rho_1):</label>
+                        <input type="number" name="rho_1" id="rho_1" value="0.03" step="0.01" min="0.01" max="0.5">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Number of Waves:</label>
+                        <input type="number" name="num_of_waves" id="num_of_waves" value="2" min="1" max="10">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Max Time (tmax):</label>
+                        <input type="number" name="tmax" id="tmax" value="1.5" step="0.1" min="0.5" max="5.0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Alpha Min:</label>
+                        <input type="number" name="alpha_min" id="alpha_min" value="0.01" step="0.01" min="0.001" max="0.5">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Alpha Max:</label>
+                        <input type="number" name="alpha_max" id="alpha_max" value="0.1" step="0.01" min="0.001" max="0.5">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Alpha Count:</label>
+                        <input type="number" name="alpha_N" id="alpha_N" value="5" min="1" max="20">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Initial Condition Points (N_0):</label>
+                        <input type="number" name="N_0" id="N_0" value="100" min="50" max="2000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Boundary Condition Points (N_b):</label>
+                        <input type="number" name="N_b" id="N_b" value="100" min="50" max="2000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Residual Points (N_r):</label>
+                        <input type="number" name="N_r" id="N_r" value="1000" min="500" max="5000">
+                    </div>
+                </div>
+            </div>
+
+            <div id="burgers-params" class="architecture-config" style="display: none;">
+                <h4>Burgers Parameters</h4>
+                <div class="config-group">
+                    <div class="form-group-with-desc">
+                        <div class="form-group">
+                            <label>Viscosity Min:</label>
+                            <input type="number" name="nu_min" id="nu_min" value="0.01" step="0.001" min="0.001" max="0.1">
+                        </div>
+                        <small style="color: #666;">Minimum viscosity value for training range (like alpha in hydrodynamics)</small>
+                    </div>
+                    
+                    <div class="form-group-with-desc">
+                        <div class="form-group">
+                            <label>Viscosity Max:</label>
+                            <input type="number" name="nu_max" id="nu_max" value="0.05" step="0.001" min="0.001" max="0.1">
+                        </div>
+                        <small style="color: #666;">Maximum viscosity value for training range</small>
+                    </div>
+                    
+                    <div class="form-group-with-desc">
+                        <div class="form-group">
+                            <label>Viscosity Count:</label>
+                            <input type="number" name="nu_N" id="nu_N" value="5" min="1" max="20">
+                        </div>
+                        <small style="color: #666;">Number of viscosity values to train on</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Max Time (tmax):</label>
+                        <input type="number" name="tmax" id="tmax_burgers" value="1.0" step="0.1" min="0.1" max="5.0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Initial Condition Points (N_0):</label>
+                        <input type="number" name="N_0_burgers" id="N_0_burgers" value="100" min="50" max="2000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Boundary Condition Points (N_b):</label>
+                        <input type="number" name="N_b_burgers" id="N_b_burgers" value="100" min="50" max="2000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Residual Points (N_r):</label>
+                        <input type="number" name="N_r_burgers" id="N_r_burgers" value="1000" min="500" max="5000">
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button type="button" class="btn-success" onclick="trainModel()">Train Model</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Visualization Parameters -->
+        <div id="visualization-section" class="section hidden">
+            <h3>Step 3: Visualization Parameters</h3>
+            
+            <div class="form-group">
+                <label>Time:</label>
+                <input type="number" name="time" id="time" value="0.5" step="0.1" min="0" max="2">
+            </div>
+            
+            <div class="form-group">
+                <label>X Min:</label>
+                <input type="number" name="x_min" id="x_min" value="0" step="0.1">
+            </div>
+            
+            <div class="form-group">
+                <label>X Max:</label>
+                <input type="number" name="x_max" id="x_max" value="2" step="0.1">
+            </div>
+            
+            <div class="form-group">
+                <label>Alpha (alpha):</label>
+                <input type="number" name="alpha" id="alpha" value="0.05" step="0.01" min="0.01" max="0.8">
+            </div>
+            
+            <div class="parameter-info" id="parameter-info">
+                <strong>Model Parameters:</strong><br>
+                • <strong>Case 1:</strong> lam=7.0, alpha in [0.01, 0.08]<br>
+                • <strong>Case 2:</strong> lam=7.0, alpha in [0.1, 0.8]<br>
+                • <strong>Case 3:</strong> lam=5.0, alpha in [0.01, 0.08]<br>
+                • <strong>Mixed:</strong> lam=7.0, alpha in [0.09, 0.11]
+            </div>
+            
+            <div class="form-group">
+                <label>Plot Type:</label>
+                <select name="plot_type" id="plot_type">
+                    <option value="density">Density</option>
+                    <option value="velocity">Velocity</option>
+                    <option value="all">All Variables</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="show_comparison" id="show_comparison">
+                    Show Comparison (LT/FD Solutions)
+                </label>
+                <div id="comparison-info" style="display: none; margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 12px;">
+                    <strong>Comparison Options:</strong><br>
+                    • <strong>Density:</strong> Compare PINN density with analytical/numerical solutions<br>
+                    • <strong>Velocity:</strong> Compare PINN velocity with analytical/numerical solutions<br>
+                    • <strong>All Variables:</strong> Show all variables with comparison plots
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button type="button" class="btn-warning" onclick="generatePlot()">Generate Plot</button>
+                <button type="button" onclick="resetForm()">Reset</button>
+            </div>
+        </div>
+        
+        <!-- Progress Bar Section -->
+        <div id="progress-section" class="progress-container hidden">
+            <h3>Training Progress</h3>
+            <div class="progress-info">
+                <div class="progress-message" id="progress-message">Initializing...</div>
+                <div class="progress-percentage" id="progress-percentage">0%</div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%">0%</div>
+            </div>
+            <div class="training-status status-training" id="training-status">
+                Training in progress...
+            </div>
+        </div>
+        
+        <div id="plot"></div>
+        <div id="error" class="error hidden"></div>
+        <div id="success" class="success hidden"></div>
+    </div>
+
+    <script>
+        let currentMode = '';
+        let currentModel = null;
+        let currentModelType = null;
+        let currentTrainingId = null;
+        let progressInterval = null;
+        
+        // Model parameter ranges
+        const modelParams = {
+            'hydro_case1': { lam: 7.0, alpha_min: 0.01, alpha_max: 0.08 },
+            'hydro_case2': { lam: 7.0, alpha_min: 0.1, alpha_max: 0.8 },
+            'hydro_case3': { lam: 5.0, alpha_min: 0.01, alpha_max: 0.08 },
+            'mixed': { lam: 7.0, alpha_min: 0.09, alpha_max: 0.11 }
+        };
+
+        function toggleMode() {
+            const mode = document.getElementById('mode').value;
+            currentMode = mode;
+            
+            // Hide all sections
+            document.getElementById('pretrained-section').classList.add('hidden');
+            document.getElementById('train-section').classList.add('hidden');
+            document.getElementById('visualization-section').classList.add('hidden');
+            
+            // Show appropriate section
+            if (mode === 'pretrained') {
+                document.getElementById('pretrained-section').classList.remove('hidden');
+                document.getElementById('visualization-section').classList.remove('hidden');
+                updateAlphaRange(); // Update alpha range for default model
+                
+                // Set currentModelType to 'hydro' for pretrained models (all are hydrodynamics)
+                currentModelType = 'hydro';
+                updatePlotTypeOptions(); // Update plot type options for hydrodynamics
+            } else if (mode === 'train') {
+                document.getElementById('train-section').classList.remove('hidden');
+                // Reset currentModelType when entering training mode
+                currentModelType = null;
+            }
+            
+            // Clear previous results
+            document.getElementById('plot').innerHTML = '';
+            document.getElementById('error').classList.add('hidden');
+            document.getElementById('success').classList.add('hidden');
+        }
+
+        function updateAlphaRange() {
+            const selectedModel = document.getElementById('pretrained_model').value;
+            const alphaInput = document.getElementById('alpha');
+            const parameterInfo = document.getElementById('parameter-info');
+            
+            if (modelParams[selectedModel]) {
+                const params = modelParams[selectedModel];
+                alphaInput.min = params.alpha_min;
+                alphaInput.max = params.alpha_max;
+                alphaInput.step = 0.01;
+                alphaInput.value = (params.alpha_min + params.alpha_max) / 2; // Set to middle of range
+                
+                // Update parameter info
+                parameterInfo.innerHTML = `
+                    <strong>Model Parameters:</strong><br>
+                    • <strong>Selected Model:</strong> lam=${params.lam}, alpha in [${params.alpha_min}, ${params.alpha_max}]
+                `;
+            }
+        }
+
+        function updateTrainingParams() {
+            const modelType = document.getElementById('model_type').value;
+            const hydroParams = document.getElementById('hydro-params');
+            const burgersParams = document.getElementById('burgers-params');
+            
+            // Hide all parameter sections
+            hydroParams.style.display = 'none';
+            burgersParams.style.display = 'none';
+            
+            // Show relevant parameter section
+            if (modelType === 'hydro') {
+                hydroParams.style.display = 'block';
+            } else if (modelType === 'burgers') {
+                burgersParams.style.display = 'block';
+            }
+        }
+
+        function trainModel() {
+            const modelType = document.getElementById('model_type').value;
+            
+            // Show progress bar and hide other messages
+            document.getElementById('progress-section').classList.remove('hidden');
+            document.getElementById('success').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+            
+            // Reset progress bar
+            updateProgress(0, 'Initializing training...', 'training');
+            
+            const formData = new FormData();
+            
+            // Architecture configuration
+            formData.append('model_type', modelType);
+            formData.append('num_neurons', document.getElementById('num_neurons').value);
+            formData.append('main_pinn_layers', document.getElementById('main_pinn_layers').value);
+            formData.append('use_param_embedding', document.getElementById('use_param_embedding').value);
+            formData.append('param_embed_layers', document.getElementById('param_embed_layers').value);
+            formData.append('param_embed_neurons', document.getElementById('param_embed_neurons').value);
+            formData.append('param_embed_activation', document.getElementById('param_embed_activation').value);
+            formData.append('input_embed_layers', document.getElementById('input_embed_layers').value);
+            formData.append('input_embed_neurons', document.getElementById('input_embed_neurons').value);
+            formData.append('input_embed_activation', document.getElementById('input_embed_activation').value);
+            formData.append('main_pinn_activation', document.getElementById('main_pinn_activation').value);
+            
+            // Training configuration
+            formData.append('iteration_adam', document.getElementById('iteration_adam').value);
+            formData.append('iteration_lbfgs', document.getElementById('iteration_lbfgs').value);
+            formData.append('learning_rate', document.getElementById('learning_rate').value);
+            formData.append('batch_size', document.getElementById('batch_size').value);
+            formData.append('num_batches', document.getElementById('num_batches').value);
+            
+            // Model-specific parameters
+            if (modelType === 'hydro') {
+                formData.append('lam', document.getElementById('lam').value);
+                formData.append('rho_1', document.getElementById('rho_1').value);
+                formData.append('num_of_waves', document.getElementById('num_of_waves').value);
+                formData.append('tmax', document.getElementById('tmax').value);
+                formData.append('alpha_min', document.getElementById('alpha_min').value);
+                formData.append('alpha_max', document.getElementById('alpha_max').value);
+                formData.append('alpha_N', document.getElementById('alpha_N').value);
+                formData.append('N_0', document.getElementById('N_0').value);
+                formData.append('N_b', document.getElementById('N_b').value);
+                formData.append('N_r', document.getElementById('N_r').value);
+            } else if (modelType === 'burgers') {
+                formData.append('nu_min', document.getElementById('nu_min').value);
+                formData.append('nu_max', document.getElementById('nu_max').value);
+                formData.append('nu_N', document.getElementById('nu_N').value);
+                formData.append('tmax', document.getElementById('tmax').value);
+                formData.append('N_0', document.getElementById('N_0_burgers').value);
+                formData.append('N_b', document.getElementById('N_b_burgers').value);
+                formData.append('N_r', document.getElementById('N_r_burgers').value);
+            }
+            
+            fetch('/train', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Training response received:', data);
+                if (data.success) {
+                    currentTrainingId = data.training_id;
+                    currentModelType = data.model_type || modelType;
+                    
+                    console.log('Training started successfully:', data);
+                    console.log('Training ID set to:', currentTrainingId);
+                    
+                    // Start progress polling after we have the training ID
+                    console.log('Starting progress polling with training ID:', currentTrainingId);
+                    // Add a small delay to ensure training has started on server
+                    setTimeout(() => {
+                        startProgressPolling();
+                    }, 500);
+                } else {
+                    updateProgress(0, `Error: ${data.error}`, 'error');
+                    document.getElementById('error').innerHTML = `Error: ${data.error}`;
+                    document.getElementById('error').classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                updateProgress(0, `Network error: ${error.message}`, 'error');
+                document.getElementById('error').innerHTML = `Network error: ${error.message}`;
+                document.getElementById('error').classList.remove('hidden');
+            });
+        }
+
+        function generatePlot() {
+            // Show loading
+            document.getElementById('plot').innerHTML = '<div class="loading">Generating plot...</div>';
+            document.getElementById('error').classList.add('hidden');
+            document.getElementById('success').classList.add('hidden');
+            
+            const formData = new FormData();
+            formData.append('model_type', currentMode);
+            
+            if (currentMode === 'pretrained') {
+                formData.append('pretrained_model', document.getElementById('pretrained_model').value);
+            } else if (currentMode === 'train' && currentModel) {
+                formData.append('trained_model_id', currentModel);
+                formData.append('trained_model_type', currentModelType);
+                
+                // Add model-specific parameters for visualization
+                if (currentModelType === 'hydro') {
+                    formData.append('lam', document.getElementById('lam').value);
+                    formData.append('num_of_waves', document.getElementById('num_of_waves').value);
+                }
+            }
+            
+            formData.append('time', document.getElementById('time').value);
+            formData.append('x_min', document.getElementById('x_min').value);
+            formData.append('x_max', document.getElementById('x_max').value);
+            formData.append('alpha', document.getElementById('alpha').value);
+            formData.append('plot_type', document.getElementById('plot_type').value);
+            formData.append('show_comparison', document.getElementById('show_comparison').checked);
+            
+            fetch('/visualize', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('plot').innerHTML = 
+                        `<img src="data:image/png;base64,${data.plot}" style="max-width: 100%; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">`;
+                } else {
+                    document.getElementById('error').innerHTML = `Error: ${data.error}`;
+                    document.getElementById('error').classList.remove('hidden');
+                    document.getElementById('plot').innerHTML = '';
+                }
+            })
+            .catch(error => {
+                document.getElementById('error').innerHTML = `Network error: ${error.message}`;
+                document.getElementById('error').classList.remove('hidden');
+                document.getElementById('plot').innerHTML = '';
+            });
+        }
+        
+        function updateProgress(percentage, message, status) {
+            const progressFill = document.getElementById('progress-fill');
+            const progressPercentage = document.getElementById('progress-percentage');
+            const progressMessage = document.getElementById('progress-message');
+            const trainingStatus = document.getElementById('training-status');
+            
+            // Update progress bar
+            progressFill.style.width = percentage + '%';
+            progressFill.textContent = percentage + '%';
+            progressPercentage.textContent = percentage + '%';
+            progressMessage.textContent = message;
+            
+            // Update status
+            trainingStatus.className = 'training-status status-' + status;
+            if (status === 'completed') {
+                trainingStatus.textContent = 'Training completed successfully!';
+            } else if (status === 'error') {
+                trainingStatus.textContent = 'Training failed!';
+            } else {
+                trainingStatus.textContent = 'Training in progress...';
+            }
+        }
+        
+        function startProgressPolling() {
+            if (progressInterval) {
+                clearInterval(progressInterval);
+            }
+            
+            console.log('Starting progress polling...');
+            
+            // If we don't have a training ID, we can't poll
+            if (!currentTrainingId) {
+                console.log('No training ID available for progress polling');
+                return;
+            }
+            
+            progressInterval = setInterval(() => {
+                console.log('Polling progress for:', currentTrainingId);
+                fetch(`/progress/${currentTrainingId}`)
+                    .then(response => {
+                        console.log('Progress response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Progress data received:', data);
+                        if (data.error) {
+                            console.error('Progress error:', data.error);
+                            return;
+                        }
+                        
+                        // Update progress bar with the data
+                        updateProgress(data.progress || 0, data.message || 'Training...', data.status || 'training');
+                        
+                        // Check for completion or error
+                        if (data.status === 'completed' || data.progress >= 100) {
+                            console.log('Training completed');
+                            clearInterval(progressInterval);
+                            progressInterval = null;
+                            
+                            // Get model_id from progress data if available
+                            if (data.model_id) {
+                                currentModel = data.model_id;
+                            }
+                            
+                            // Show success message and visualization section
+                            document.getElementById('success').innerHTML = 
+                                `${data.message || 'Training completed successfully!'}<br>Model ID: ${currentModel || 'Unknown'}`;
+                            document.getElementById('success').classList.remove('hidden');
+                            document.getElementById('visualization-section').classList.remove('hidden');
+                            
+                            // Update plot type options based on the trained model
+                            updatePlotTypeOptions();
+                            
+                            // Hide progress bar after a delay
+                            setTimeout(() => {
+                                document.getElementById('progress-section').classList.add('hidden');
+                            }, 3000);
+                            
+                        } else if (data.status === 'error') {
+                            console.log('Training error');
+                            clearInterval(progressInterval);
+                            progressInterval = null;
+                            
+                            document.getElementById('error').innerHTML = data.message || 'Training failed!';
+                            document.getElementById('error').classList.remove('hidden');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Progress polling error:', error);
+                        // Don't stop polling on network errors, just log them
+                    });
+            }, 1000); // Poll every second
+        }
+        
+        function resetForm() {
+            document.getElementById('mode').value = '';
+            document.getElementById('pretrained-section').classList.add('hidden');
+            document.getElementById('train-section').classList.add('hidden');
+            document.getElementById('visualization-section').classList.add('hidden');
+            document.getElementById('progress-section').classList.add('hidden');
+            document.getElementById('plot').innerHTML = '';
+            document.getElementById('error').classList.add('hidden');
+            document.getElementById('success').classList.add('hidden');
+            document.getElementById('show_comparison').checked = false;
+            document.getElementById('comparison-info').style.display = 'none';
+            
+            // Clear progress polling
+            if (progressInterval) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+            }
+            
+            currentMode = '';
+            currentModel = null;
+            currentModelType = null;
+            currentTrainingId = null;
+            
+            // Reset plot type options to hydrodynamics defaults
+            const plotTypeSelect = document.getElementById('plot_type');
+            plotTypeSelect.innerHTML = `
+                <option value="density">Density</option>
+                <option value="velocity">Velocity</option>
+                <option value="all">All Variables</option>
+            `;
+        }
+        
+        // Update plot type options based on model type
+        document.getElementById('model_type').addEventListener('change', function() {
+            const modelType = this.value;
+            const plotTypeSelect = document.getElementById('plot_type');
+            
+            if (modelType === 'burgers') {
+                plotTypeSelect.innerHTML = '<option value="solution">Solution u(x,t)</option>';
+            } else {
+                plotTypeSelect.innerHTML = `
+                    <option value="density">Density</option>
+                    <option value="velocity">Velocity</option>
+                    <option value="all">All Variables</option>
+                `;
+            }
+        });
+        
+        // Function to update plot type options based on current model type
+        function updatePlotTypeOptions() {
+            const plotTypeSelect = document.getElementById('plot_type');
+            if (currentModelType === 'burgers') {
+                plotTypeSelect.innerHTML = '<option value="solution">Solution u(x,t)</option>';
+            } else {
+                plotTypeSelect.innerHTML = `
+                    <option value="density">Density</option>
+                    <option value="velocity">Velocity</option>
+                    <option value="all">All Variables</option>
+                `;
+            }
+        }
+        
+        // Initialize training parameters on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTrainingParams();
+        });
+        
+        // Show/hide comparison info when checkbox is toggled
+        document.getElementById('show_comparison').addEventListener('change', function() {
+            const comparisonInfo = document.getElementById('comparison-info');
+            if (this.checked) {
+                comparisonInfo.style.display = 'block';
+            } else {
+                comparisonInfo.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
