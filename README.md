@@ -33,7 +33,7 @@ A comprehensive web application for training, visualizing, and comparing Physics
 
 1. **Clone the repository**
    ```bash
-       git clone https://github.com/Tirthankar4/pinnlab.git
+    git clone https://github.com/Tirthankar4/pinnlab.git
     cd pinnlab
    ```
 
@@ -143,8 +143,8 @@ rho_o = 1            # Reference density
 ### Hydrodynamics Models
 - **Case 1**: Low amplitude waves (α: 0.01-0.08)
 - **Case 2**: High amplitude waves (α: 0.1-0.8)
-- **Case 3**: Different wavelength configuration
-- **Mixed Model**: Combined architecture
+- **Case 3**: Different wavelength configuration (α: 0.01-0.08)
+- **Mixed Model**: Combined architecture (α: 0.09-0.11)
 
 ### Burgers' Equation Models
 - **Viscosity Range**: Configurable viscosity parameter
@@ -194,40 +194,3 @@ rho_o = 1            # Reference density
 - **Batch Processing**: Efficient memory usage
 - **Gradient Accumulation**: Large model training support
 - **Memory Cleanup**: Automatic GPU memory management
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Physics-Informed Neural Networks (PINNs) methodology
-- PyTorch for deep learning framework
-- Flask for web application framework
-- Matplotlib for scientific visualization
-
-## 📞 Support
-
-For questions, issues, or contributions:
-- Open an issue on GitHub
-- Contact the development team
-- Check the documentation for common solutions
-
-## 🔄 Version History
-
-- **v1.0.0**: Initial release with hydrodynamics and Burgers' equation support
-- **v1.1.0**: Added real-time training progress tracking
-- **v1.2.0**: Enhanced visualization with comparison plots
-- **v1.3.0**: Improved web interface and parameter embedding
-
----
-
-**Note**: PINNLab is designed for research and educational purposes. For production use, additional testing and validation are recommended. 
