@@ -1,4 +1,4 @@
-MODEL_TYPE = 'hydro'  # Options: 'hydro', 'burgers'
+MODEL_TYPE = 'hydro'  # Options: 'hydro', 'burgers', 'wave'
 
 tmin = 0.
 xmin = 0.

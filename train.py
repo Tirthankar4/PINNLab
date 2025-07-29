@@ -11,10 +11,8 @@ from config import xmin, tmin, iteration_adam_1D, iteration_lbgfs_1D
 from config import rho_o
 from losses.losses import ASTPN
 from models.burgers import BurgersPINN
-from visualisation import plot_function, rel_misfit
+from visualisations import plot_function, rel_misfit, plot_burgers_solution, rel_misfit_burgers, rel_misfit_wave
 from config import MODEL_TYPE
-from visualisation_burgers import plot_burgers_solution
-from visualisation_burgers import rel_misfit_burgers
 
 # Define or import a true solution function for Burgers' equation:
 def true_solution_fn(x, t, nu):
@@ -44,6 +42,8 @@ if MODEL_TYPE == 'hydro':
     xmax = xmin + lam * num_of_waves
 elif MODEL_TYPE == 'burgers':
     xmax = 1.0  # Burgers uses [0,1] domain for sin(pi*x) initial condition
+elif MODEL_TYPE == 'wave':
+    xmax = 1.0  # Wave equation uses [0,1] domain with periodic boundary conditions
 else:
     raise ValueError(f'Unknown MODEL_TYPE: {MODEL_TYPE}')
 
@@ -55,6 +55,10 @@ elif MODEL_TYPE == 'burgers':
     from models.burgers import BurgersPINN
     net = BurgersPINN()
     print('Training BurgersPINN (Burgers\' equation) with parameter embedding')
+elif MODEL_TYPE == 'wave':
+    from models.wave import WavePINN
+    net = WavePINN()
+    print('Training WavePINN (wave equation) with parameter embedding')
 else:
     raise ValueError(f'Unknown MODEL_TYPE: {MODEL_TYPE}')
 
@@ -136,8 +140,74 @@ elif MODEL_TYPE == 'burgers':
     plt.show()  # Ensure first plot is displayed
     rel_misfit_burgers(net, [0.0, 0.5, 1.0], initial_params, N=1000, nu=0.08, true_solution_fn=true_solution_fn)
     plt.show()  # Ensure second plot is displayed
+elif MODEL_TYPE == 'wave':
+    initial_params = (xmin, xmax, tmax, device)
+    # Define analytical solution function for wave equation
+    def wave_analytical_solution_fn(x, t, c):
+        from analytical_solutions.wave import wave_analytical_solution_dalembert, wave_initial_condition_sine
+        def initial_displacement(x):
+            return wave_initial_condition_sine(x, amplitude=1.0, wavenumber=2*np.pi)
+        return wave_analytical_solution_dalembert(x, t, c, initial_displacement)
+    
+    # Plot for two different wave speeds from the training range
+    rel_misfit_wave(net, [0.0, 0.5, 1.0], initial_params, N=1000, c=0.5, analytical_solution_fn=wave_analytical_solution_fn)
+    plt.show()  # Ensure first plot is displayed
+    rel_misfit_wave(net, [0.0, 0.5, 1.0], initial_params, N=1000, c=1.5, analytical_solution_fn=wave_analytical_solution_fn)
+    plt.show()  # Ensure second plot is displayed
 
-'''# Save the trained model
-MODEL_PATH = 'Running_Final_pinn_model.pth'
-torch.save(net.state_dict(), MODEL_PATH)
-print(f"Model saved to {MODEL_PATH}")'''
+# Save the trained model in organized folder structure
+import os
+import time
+import argparse
+
+# Parse command line arguments for save_model option
+parser = argparse.ArgumentParser(description='Train PINN model')
+parser.add_argument('--save_model', action='store_true', help='Save the trained model to disk')
+args = parser.parse_args()
+
+# Only save if user requests it
+if args.save_model:
+    # Create folder if it doesn't exist
+    model_folder = f"pretrained_models/{MODEL_TYPE}"
+    os.makedirs(model_folder, exist_ok=True)
+    
+    # Generate unique model filename
+    timestamp = int(time.time())
+    model_filename = f"{MODEL_TYPE}_trained_{timestamp}.pth"
+    model_path = os.path.join(model_folder, model_filename)
+    
+    # Get alpha_N from the alpha_list length
+    alpha_N = len(alpha_list)
+    
+    # Save model with metadata
+    checkpoint = {
+        'model_state_dict': net.state_dict(),
+        'model_type': MODEL_TYPE,
+        'config': {
+            'num_neurons': 96,  # Default config
+            'use_param_embedding': True,
+            'param_embed_layers': 2,
+            'param_embed_neurons': 32,
+            'input_embed_layers': 3,
+            'input_embed_neurons': 64,
+            'main_pinn_layers': 5
+        },
+        'training_params': {
+            'lam': lam,
+            'rho_1': rho_1,
+            'num_of_waves': num_of_waves,
+            'tmax': tmax,
+            'alpha_min': alpha_min,
+            'alpha_max': alpha_max,
+            'alpha_N': alpha_N,
+            'N_0': N_0,
+            'N_b': N_b,
+            'N_r': N_r
+        },
+        'timestamp': timestamp
+    }
+    
+    torch.save(checkpoint, model_path)
+    print(f"Model saved to {model_path}")
+else:
+    print("Model not saved (use --save_model flag to save)")

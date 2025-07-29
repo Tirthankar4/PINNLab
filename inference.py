@@ -6,7 +6,7 @@ from model_architecture import PINN
 from data_generator import alpha_generator
 from losses.losses import ASTPN
 from config import xmin, ymin, tmin, rho_o
-from visualisation import plot_function, rel_misfit
+from visualisations import plot_function, rel_misfit
 from solver import req_consts_calc  # <-- import for jeans and alpha
 
 # Device setup

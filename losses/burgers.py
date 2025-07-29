@@ -19,6 +19,7 @@ def pde_residue_burgers(colloc, net, nu):
     u_xx = diff(u_x, x, order=1)
     # Burgers' equation: u_t + u * u_x = nu * u_xx
     f = u_t + u * u_x - nu * u_xx
+    
     return f
 
 @register_loss('burgers_1d')

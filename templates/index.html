@@ -393,20 +393,30 @@
                 <select name="model_type" id="model_type" onchange="updateTrainingParams()">
                     <option value="burgers">Burgers Equation</option>
                     <option value="hydro">Hydrodynamics</option>
+                    <option value="wave">Wave Equation</option>
                 </select>
             </div>
 
             <div class="architecture-config">
                 <h4>Architecture Configuration</h4>
+                <div class="info-box" style="background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+                    <strong>💡 Residual Connections:</strong> When any network (Main PINN, Parameter Embedding, or Input Embedding) has more than 5 layers, residual connections are automatically added between the first and second-to-last layers, similar to the legacy PINN architecture. This helps with training deeper networks and is especially beneficial for the wave equation.
+                </div>
                 <div class="config-group">
-                    <div class="form-group">
-                        <label>Main PINN Neurons:</label>
-                        <input type="number" name="num_neurons" id="num_neurons" value="96" min="16" max="512">
+                    <div class="form-group-with-desc">
+                        <div class="form-group">
+                            <label>Main PINN Neurons:</label>
+                            <input type="number" name="num_neurons" id="num_neurons" value="128" min="16" max="512">
+                        </div>
+                        <small>Recommended: 128+ for wave equation, 96 for others</small>
                     </div>
                     
-                    <div class="form-group">
-                        <label>Main PINN Layers:</label>
-                        <input type="number" name="main_pinn_layers" id="main_pinn_layers" value="5" min="1" max="20">
+                    <div class="form-group-with-desc">
+                        <div class="form-group">
+                            <label>Main PINN Layers:</label>
+                            <input type="number" name="main_pinn_layers" id="main_pinn_layers" value="6" min="1" max="20">
+                        </div>
+                        <small>Residual connections added automatically when > 5 layers</small>
                     </div>
                     
                     <div class="form-group">
@@ -427,14 +437,20 @@
                         </select>
                     </div>
                     
-                    <div class="form-group">
-                        <label>Parameter Embedding Layers:</label>
-                        <input type="number" name="param_embed_layers" id="param_embed_layers" value="2" min="1" max="10">
+                    <div class="form-group-with-desc">
+                        <div class="form-group">
+                            <label>Parameter Embedding Layers:</label>
+                            <input type="number" name="param_embed_layers" id="param_embed_layers" value="3" min="1" max="10">
+                        </div>
+                        <small>Residual connections added automatically when > 5 layers</small>
                     </div>
                     
-                    <div class="form-group">
-                        <label>Parameter Embedding Neurons:</label>
-                        <input type="number" name="param_embed_neurons" id="param_embed_neurons" value="32" min="8" max="256">
+                    <div class="form-group-with-desc">
+                        <div class="form-group">
+                            <label>Parameter Embedding Neurons:</label>
+                            <input type="number" name="param_embed_neurons" id="param_embed_neurons" value="64" min="8" max="256">
+                        </div>
+                        <small>Recommended: 64+ for wave equation, 32 for others</small>
                     </div>
                     
                     <div class="form-group">
@@ -447,14 +463,20 @@
                         </select>
                     </div>
                     
-                    <div class="form-group">
-                        <label>Input Embedding Layers:</label>
-                        <input type="number" name="input_embed_layers" id="input_embed_layers" value="3" min="1" max="10">
+                    <div class="form-group-with-desc">
+                        <div class="form-group">
+                            <label>Input Embedding Layers:</label>
+                            <input type="number" name="input_embed_layers" id="input_embed_layers" value="4" min="1" max="10">
+                        </div>
+                        <small>Residual connections added automatically when > 5 layers</small>
                     </div>
                     
-                    <div class="form-group">
-                        <label>Input Embedding Neurons:</label>
-                        <input type="number" name="input_embed_neurons" id="input_embed_neurons" value="64" min="16" max="256">
+                    <div class="form-group-with-desc">
+                        <div class="form-group">
+                            <label>Input Embedding Neurons:</label>
+                            <input type="number" name="input_embed_neurons" id="input_embed_neurons" value="128" min="16" max="256">
+                        </div>
+                        <small>Recommended: 128+ for wave equation, 64 for others</small>
                     </div>
                     
                     <div class="form-group">
@@ -475,17 +497,17 @@
                     <div class="form-group-with-desc">
                         <div class="form-group">
                             <label for="iteration_adam">Adam Iterations:</label>
-                            <input type="number" id="iteration_adam" name="iteration_adam" value="500" min="1" max="10000">
+                            <input type="number" id="iteration_adam" name="iteration_adam" value="1000" min="1" max="10000">
                         </div>
-                        <small>Number of Adam optimization iterations</small>
+                        <small>Recommended: 1000+ for wave equation, 500 for others</small>
                     </div>
                     
                     <div class="form-group-with-desc">
                         <div class="form-group">
                             <label for="iteration_lbfgs">L-BFGS Iterations:</label>
-                            <input type="number" id="iteration_lbfgs" name="iteration_lbfgs" value="50" min="0" max="1000">
+                            <input type="number" id="iteration_lbfgs" name="iteration_lbfgs" value="100" min="0" max="1000">
                         </div>
-                        <small>Number of L-BFGS optimization iterations</small>
+                        <small>Recommended: 100+ for wave equation, 50 for others</small>
                     </div>
                     
                     <div class="form-group">
@@ -609,6 +631,67 @@
                     </div>
                 </div>
             </div>
+
+            <div id="wave-params" class="architecture-config" style="display: none;">
+                <h4>Wave Equation Parameters</h4>
+                <div class="config-group">
+                    <div class="form-group-with-desc">
+                        <div class="form-group">
+                            <label>Wave Speed Min:</label>
+                            <input type="number" name="c_min" id="c_min" value="0.5" step="0.1" min="0.1" max="5.0">
+                        </div>
+                        <small style="color: #666;">Minimum wave speed value for training range (like alpha in hydrodynamics)</small>
+                    </div>
+                    
+                    <div class="form-group-with-desc">
+                        <div class="form-group">
+                            <label>Wave Speed Max:</label>
+                            <input type="number" name="c_max" id="c_max" value="2.0" step="0.1" min="0.1" max="5.0">
+                        </div>
+                        <small style="color: #666;">Maximum wave speed value for training range</small>
+                    </div>
+                    
+                    <div class="form-group-with-desc">
+                        <div class="form-group">
+                            <label>Wave Speed Count:</label>
+                            <input type="number" name="c_N" id="c_N" value="5" min="1" max="20">
+                        </div>
+                        <small style="color: #666;">Number of wave speed values to train on</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Max Time (tmax):</label>
+                        <input type="number" name="tmax" id="tmax_wave" value="1.0" step="0.1" min="0.1" max="5.0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Initial Condition Points (N_0):</label>
+                        <input type="number" name="N_0" id="N_0_wave" value="100" min="50" max="2000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Boundary Condition Points (N_b):</label>
+                        <input type="number" name="N_b" id="N_b_wave" value="100" min="50" max="2000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Residual Points (N_r):</label>
+                        <input type="number" name="N_r" id="N_r_wave" value="1000" min="500" max="5000">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Model Saving Option -->
+            <div class="form-group" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745;">
+                <label style="min-width: auto; margin-right: 15px;">
+                    <input type="checkbox" name="save_model" id="save_model" style="margin-right: 8px;">
+                    Save Model to Disk
+                </label>
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    Check this to save the trained model to the pretrained_models folder for later use.
+                    If unchecked, the model will only be available for the current session.
+                </small>
+            </div>
             
             <div style="text-align: center; margin-top: 20px;">
                 <button type="button" class="btn-success" onclick="trainModel()">Train Model</button>
@@ -635,7 +718,7 @@
             </div>
             
             <div class="form-group">
-                <label>Alpha (alpha):</label>
+                <label>Parameter (alpha/c):</label>
                 <input type="number" name="alpha" id="alpha" value="0.05" step="0.01" min="0.01" max="0.8">
             </div>
             
@@ -764,16 +847,47 @@
             const modelType = document.getElementById('model_type').value;
             const hydroParams = document.getElementById('hydro-params');
             const burgersParams = document.getElementById('burgers-params');
+            const waveParams = document.getElementById('wave-params');
             
             // Hide all parameter sections
             hydroParams.style.display = 'none';
             burgersParams.style.display = 'none';
+            waveParams.style.display = 'none';
             
-            // Show relevant parameter section
+            // Show relevant parameter section and set optimal defaults
             if (modelType === 'hydro') {
                 hydroParams.style.display = 'block';
+                // Hydrodynamics defaults (current good performance)
+                document.getElementById('num_neurons').value = '96';
+                document.getElementById('main_pinn_layers').value = '5';
+                document.getElementById('param_embed_layers').value = '2';
+                document.getElementById('param_embed_neurons').value = '32';
+                document.getElementById('input_embed_layers').value = '3';
+                document.getElementById('input_embed_neurons').value = '64';
+                document.getElementById('iteration_adam').value = '500';
+                document.getElementById('iteration_lbfgs').value = '50';
             } else if (modelType === 'burgers') {
                 burgersParams.style.display = 'block';
+                // Burgers defaults (similar to hydro)
+                document.getElementById('num_neurons').value = '96';
+                document.getElementById('main_pinn_layers').value = '5';
+                document.getElementById('param_embed_layers').value = '2';
+                document.getElementById('param_embed_neurons').value = '32';
+                document.getElementById('input_embed_layers').value = '3';
+                document.getElementById('input_embed_neurons').value = '64';
+                document.getElementById('iteration_adam').value = '500';
+                document.getElementById('iteration_lbfgs').value = '50';
+            } else if (modelType === 'wave') {
+                waveParams.style.display = 'block';
+                // Wave equation optimized defaults with residual connections
+                document.getElementById('num_neurons').value = '128';
+                document.getElementById('main_pinn_layers').value = '6';  // Triggers residual connection
+                document.getElementById('param_embed_layers').value = '3';
+                document.getElementById('param_embed_neurons').value = '64';
+                document.getElementById('input_embed_layers').value = '4';
+                document.getElementById('input_embed_neurons').value = '128';
+                document.getElementById('iteration_adam').value = '1000';
+                document.getElementById('iteration_lbfgs').value = '100';
             }
         }
 
@@ -830,7 +944,18 @@
                 formData.append('N_0', document.getElementById('N_0_burgers').value);
                 formData.append('N_b', document.getElementById('N_b_burgers').value);
                 formData.append('N_r', document.getElementById('N_r_burgers').value);
+            } else if (modelType === 'wave') {
+                formData.append('c_min', document.getElementById('c_min').value);
+                formData.append('c_max', document.getElementById('c_max').value);
+                formData.append('c_N', document.getElementById('c_N').value);
+                formData.append('tmax', document.getElementById('tmax_wave').value);
+                formData.append('N_0', document.getElementById('N_0_wave').value);
+                formData.append('N_b', document.getElementById('N_b_wave').value);
+                formData.append('N_r', document.getElementById('N_r_wave').value);
             }
+            
+            // Save model option
+            formData.append('save_model', document.getElementById('save_model').checked);
             
             fetch('/train', {
                 method: 'POST',
@@ -884,6 +1009,9 @@
                 if (currentModelType === 'hydro') {
                     formData.append('lam', document.getElementById('lam').value);
                     formData.append('num_of_waves', document.getElementById('num_of_waves').value);
+                } else if (currentModelType === 'wave') {
+                    // For wave equation, alpha parameter represents wave speed c
+                    formData.append('c', document.getElementById('alpha').value);
                 }
             }
             
@@ -1052,6 +1180,8 @@
             
             if (modelType === 'burgers') {
                 plotTypeSelect.innerHTML = '<option value="solution">Solution u(x,t)</option>';
+            } else if (modelType === 'wave') {
+                plotTypeSelect.innerHTML = '<option value="solution">Solution u(x,t)</option>';
             } else {
                 plotTypeSelect.innerHTML = `
                     <option value="density">Density</option>
@@ -1065,6 +1195,8 @@
         function updatePlotTypeOptions() {
             const plotTypeSelect = document.getElementById('plot_type');
             if (currentModelType === 'burgers') {
+                plotTypeSelect.innerHTML = '<option value="solution">Solution u(x,t)</option>';
+            } else if (currentModelType === 'wave') {
                 plotTypeSelect.innerHTML = '<option value="solution">Solution u(x,t)</option>';
             } else {
                 plotTypeSelect.innerHTML = `

@@ -160,6 +160,45 @@ def process_batch(batch_size, collocation_domain, collocation_IC, alpha, net, mo
         ic_loss, bc_loss, pde_loss = burgers_loss(net, model, batch_dict, mse_cost_function, params_dict)
         
         return ic_loss, bc_loss, pde_loss
+    
+    elif MODEL_TYPE == 'wave':
+        # Prepare batch and params for Wave equation - always use parameter embedding
+        x_ic = batch_ic[0]
+        t_ic = batch_ic[1]
+        
+        # Wave equation initial condition (sine wave) - match analytical solution
+        def wave_initial_condition(x):
+            return torch.sin(2 * np.pi * x)
+        
+        # Initial velocity (zero for standing wave) - match analytical solution
+        def wave_initial_velocity(x):
+            return torch.zeros_like(x)
+        
+        u_ic_true = wave_initial_condition(x_ic)
+        u_t_ic_true = wave_initial_velocity(x_ic)
+        
+        # Always use parameter embedding: c (wave speed) is passed as input to network
+        c_input = torch.full((actual_batch_size, 1), alpha_val.item(), device=x_ic.device, dtype=x_ic.dtype)
+        net_ic_inputs = [x_ic, t_ic, c_input]
+        net_dom_inputs = [batch_domain[0], batch_domain[1], c_input]
+        c_value = alpha_val.item()  # For loss computation
+        
+        batch_dict = {
+            'collocation_domain': net_dom_inputs,
+            'collocation_IC': net_ic_inputs,
+            'u_ic_true': u_ic_true,
+            'u_t_ic_true': u_t_ic_true,
+            'batch_size': actual_batch_size
+        }
+        params_dict = {
+            'c': c_value
+        }
+        
+        # Import wave_loss here to avoid circular imports
+        from losses.wave import wave_loss
+        ic_loss, bc_loss, pde_loss = wave_loss(net, model, batch_dict, mse_cost_function, params_dict)
+        
+        return ic_loss, bc_loss, pde_loss
     else:
         raise ValueError(f'Unknown MODEL_TYPE: {MODEL_TYPE}')
 
@@ -247,17 +286,34 @@ def train_batched_with_progress(training_id, net, model, alpha, collocation_doma
             net.debug_print = False
             model.debug_print = False
             
-        # Update weights based on iteration
-        if i < 200:
-            w_IC, w_BC, w_PDE = 1, 1, 2
-        elif 200 <= i < 400:
-            w_IC, w_BC, w_PDE = 1, 1, 4
-        elif 400 <= i < 600:
-            w_IC, w_BC, w_PDE = 1, 1, 6
-        elif 600 <= i < 800:
-            w_IC, w_BC, w_PDE = 1, 1, 8
+        # Update weights based on iteration and model type
+        import config as config_module
+        model_type = config_module.MODEL_TYPE
+        
+        if model_type == 'wave':
+            # For wave equation, emphasize initial conditions more
+            if i < 200:
+                w_IC, w_BC, w_PDE = 10, 1, 1
+            elif 200 <= i < 400:
+                w_IC, w_BC, w_PDE = 8, 1, 2
+            elif 400 <= i < 600:
+                w_IC, w_BC, w_PDE = 5, 1, 3
+            elif 600 <= i < 800:
+                w_IC, w_BC, w_PDE = 3, 1, 5
+            else:
+                w_IC, w_BC, w_PDE = 2, 1, 8
         else:
-            w_IC, w_BC, w_PDE = 1, 1, 10
+            # Original weighting for hydro and burgers
+            if i < 200:
+                w_IC, w_BC, w_PDE = 1, 1, 2
+            elif 200 <= i < 400:
+                w_IC, w_BC, w_PDE = 1, 1, 4
+            elif 400 <= i < 600:
+                w_IC, w_BC, w_PDE = 1, 1, 6
+            elif 600 <= i < 800:
+                w_IC, w_BC, w_PDE = 1, 1, 8
+            else:
+                w_IC, w_BC, w_PDE = 1, 1, 10
         
         # Compute loss and update parameters
         loss, ic_loss, bc_loss, pde_loss = closure_batched(

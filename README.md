@@ -33,7 +33,7 @@ A comprehensive web application for training, visualizing, and comparing Physics
 
 1. **Clone the repository**
    ```bash
-    git clone https://github.com/Tirthankar4/pinnlab.git
+       git clone https://github.com/yourusername/pinnlab.git
     cd pinnlab
    ```
 
@@ -74,11 +74,31 @@ A comprehensive web application for training, visualizing, and comparing Physics
 
 ### Training New Models
 
-1. **Choose Model Type**: Select between hydrodynamics or Burgers' equation
+1. **Choose Model Type**: Select between hydrodynamics, Burgers' equation, or wave equation
 2. **Configure Architecture**: Set neural network parameters (layers, neurons, activations)
 3. **Set Training Parameters**: Configure learning rates, iterations, and batch sizes
-4. **Start Training**: Monitor real-time progress with detailed metrics
-5. **Visualize Results**: Generate plots from your trained model
+4. **Choose Save Option**: 
+   - **Save Model**: Check to save the trained model to disk for later use
+   - **Session Only**: Leave unchecked to use the model only for the current session
+5. **Start Training**: Monitor real-time progress with detailed metrics
+6. **Visualize Results**: Generate plots from your trained model
+
+### Command Line Training
+
+You can also train models from the command line:
+
+```bash
+# Train without saving (default)
+python train.py
+
+# Train and save the model
+python train.py --save_model
+```
+
+The command-line training will:
+- Use the model type specified in `config.py`
+- Save models to `pretrained_models/{model_type}/` folder if `--save_model` is used
+- Generate plots and comparison results automatically
 
 ### Advanced Configuration
 
@@ -99,98 +119,63 @@ A comprehensive web application for training, visualizing, and comparing Physics
 ```
 PINNLab/
 ├── app.py                          # Main Flask application
-├── train.py                        # Standalone training script
-├── config.py                       # Configuration parameters
-├── requirements.txt                 # Python dependencies
+├── train.py                        # Training script for command line
+├── inference.py                    # Inference script
+├── config.py                       # Configuration settings
+├── requirements.txt                # Python dependencies
+├── README.md                       # This file
+│
 ├── models/                         # Neural network architectures
-│   ├── base.py                     # Base model class
+│   ├── base.py                     # Base PINN architecture
 │   ├── hydro.py                    # Hydrodynamics PINN
-│   └── burgers.py                  # Burgers' equation PINN
-├── losses/                         # Loss function implementations
-│   ├── base.py                     # Base loss class
-│   ├── hydro.py                    # Hydrodynamics losses
-│   ├── burgers.py                  # Burgers' losses
+│   ├── burgers.py                  # Burgers equation PINN
+│   └── wave.py                     # Wave equation PINN
+│
+├── losses/                         # Loss functions
+│   ├── base.py                     # Base loss functions
+│   ├── hydrodynamic.py             # Hydrodynamics losses
+│   ├── burgers.py                  # Burgers equation losses
+│   ├── wave.py                     # Wave equation losses
+│   ├── losses.py                   # Loss registry and utilities
 │   └── registry.py                 # Loss function registry
-├── templates/                      # Web interface templates
+│
+├── visualisations/                 # Visualization modules
+│   ├── __init__.py                 # Package initialization
+│   ├── visualisation.py            # Hydrodynamics visualizations
+│   ├── visualisation_burgers.py    # Burgers equation visualizations
+│   └── visualisation_wave.py       # Wave equation visualizations
+│
+├── pretrained_models/              # Organized pretrained models
+│   ├── hydrodynamics/              # Hydrodynamics models
+│   │   ├── Case1_final_part1.pth   # Case 1 model
+│   │   ├── Case2_final_part1.pth   # Case 2 model
+│   │   ├── Case3_final_part1.pth   # Case 3 model
+│   │   └── mixed_final_part1.pth   # Mixed model
+│   ├── burgers/                    # Burgers equation models
+│   │   └── (future models)
+│   └── wave/                       # Wave equation models
+│       └── (future models)
+│
+├── templates/                      # HTML templates
 │   └── index.html                  # Main web interface
-├── visualisation.py                # Hydrodynamics plotting functions
-├── visualisation_burgers.py        # Burgers' equation plotting
-├── data_generator.py               # Training data generation
-├── solver.py                       # Training algorithms
-├── LAX.py                         # Lax-Wendroff numerical solver
-├── burgers_analytical.py           # Analytical Burgers' solutions
-└── *.pth                          # Pretrained model files
+│
+├── analytical_solutions/           # Analytical and numerical solution generators
+│   ├── __init__.py                 # Package initialization
+│   ├── hydrodynamics/              # Hydrodynamics solutions
+│   │   ├── __init__.py             # Hydrodynamics package init
+│   │   └── LAX.py                  # Lax-Wendroff Finite Difference solver
+│   ├── burgers/                    # Burgers equation solutions
+│   │   ├── __init__.py             # Burgers package init
+│   │   └── burgers_analytical.py   # Burgers equation analytical solutions
+│   └── wave/                       # Wave equation solutions
+│       ├── __init__.py             # Wave package init
+│       └── wave_analytical.py      # Wave equation analytical solutions
+│
+└── legacy/                         # Legacy code
+    ├── model_architecture.py       # Legacy PINN architecture
+    └── legacy_pinn.py              # Legacy PINN class
 ```
 
 ## 🔧 Configuration
 
-### Model Configuration (`config.py`)
-```python
-MODEL_TYPE = 'hydro'  # 'hydro' or 'burgers'
-tmin = 0.0           # Minimum time
-xmin = 0.0           # Minimum x-coordinate
-rho_o = 1            # Reference density
-```
-
-### Training Parameters
-- **Adam Iterations**: 500 (default)
-- **L-BFGS Iterations**: 50 (default)
-- **Learning Rate**: 0.001 (default)
-- **Batch Size**: 1000 (default)
-
-## 🧪 Model Types
-
-### Hydrodynamics Models
-- **Case 1**: Low amplitude waves (α: 0.01-0.08)
-- **Case 2**: High amplitude waves (α: 0.1-0.8)
-- **Case 3**: Different wavelength configuration (α: 0.01-0.08)
-- **Mixed Model**: Combined architecture (α: 0.09-0.11)
-
-### Burgers' Equation Models
-- **Viscosity Range**: Configurable viscosity parameter
-- **Analytical Comparison**: Compare with exact solutions
-- **Parameter Embedding**: Viscosity as embedded parameter
-
-## 📊 Visualization Features
-
-### Plot Types
-- **Density**: Fluid density distribution over space
-- **Velocity**: Velocity field visualization
-- **All Variables**: Combined density, velocity, and potential plots
-- **Comparison**: PINN vs analytical/numerical solutions
-
-### Error Analysis
-- **Relative Misfit**: Percentage error calculations
-- **Absolute Error**: Direct difference measurements
-- **Statistical Analysis**: Error distribution and statistics
-
-## 🔬 Technical Details
-
-### Neural Network Architecture
-- **Multi-layer Perceptron**: Configurable depth and width
-- **Parameter Embedding**: Separate networks for parameter encoding
-- **Input Embedding**: Coordinate transformation layers
-- **Activation Functions**: Flexible activation function selection
-
-### Training Algorithm
-- **Adam Optimizer**: Initial training phase
-- **L-BFGS Optimizer**: Fine-tuning phase
-- **Batch Training**: Memory-efficient training
-- **Progress Tracking**: Real-time training metrics
-
-### Numerical Methods
-- **Finite Difference**: Lax-Wendroff scheme for comparison
-- **Linear Theory**: Analytical approximations
-- **Collocation Points**: Physics-informed training data
-
-## 🚀 Performance
-
-### Hardware Acceleration
-- **CUDA Support**: GPU acceleration for training
-- **MPS Support**: Apple Silicon optimization
-- **CPU Fallback**: Automatic CPU usage when GPU unavailable
-
-### Memory Management
-- **Batch Processing**: Efficient memory usage
-- **Gradient Accumulation**: Large model training support
-- **Memory Cleanup**: Automatic GPU memory management
+### Model Configuration (`
