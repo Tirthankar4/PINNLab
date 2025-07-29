@@ -33,7 +33,7 @@ A comprehensive web application for training, visualizing, and comparing Physics
 
 1. **Clone the repository**
    ```bash
-       git clone https://github.com/yourusername/pinnlab.git
+       git clone https://github.com/Tirthankar4/pinnlab.git
     cd pinnlab
    ```
 
