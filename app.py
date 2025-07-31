@@ -133,25 +133,9 @@ def load_pretrained_model(model_name):
         model.to(device)
         model.eval()  # Set to evaluation mode
         
-        # Debug: Check model weights
-        print(f"Model loaded successfully. Checking weights...")
-        total_params = 0
-        for name, param in model.named_parameters():
-            if param.requires_grad:
-                total_params += param.numel()
-                print(f"  {name}: shape={param.shape}, mean={param.mean().item():.6f}, std={param.std().item():.6f}")
-        
-        print(f"Total trainable parameters: {total_params}")
-        
-        # Test model output
-        with torch.no_grad():
-            if model_type == 'wave':
-                x_test = torch.linspace(0, 1, 10).reshape(-1, 1).to(device)
-                t_test = torch.full((10, 1), 0.5, device=device)
-                c_test = torch.full((10, 1), 1.0, device=device)
-                test_input = [x_test, t_test, c_test]
-                test_output = model(test_input)
-                print(f"Test output range: [{test_output.min().item():.6f}, {test_output.max().item():.6f}]")
+        # Model loaded successfully
+        total_params = sum(param.numel() for param in model.parameters() if param.requires_grad)
+        print(f"Model loaded successfully with {total_params} trainable parameters")
         
         return model, None
         
@@ -1160,7 +1144,7 @@ def generate_wave_comparison_plot_with_module(model, time_array, initial_params,
         print(f"  X range: [{X.min():.6f}, {X.max():.6f}]")
         print(f"  u_pinn range: [{u_pinn.min():.6f}, {u_pinn.max():.6f}]")
         print(f"  u_analytical range: [{u_analytical.min():.6f}, {u_analytical.max():.6f}]")
-        print(f"  u_pinn mean: {u_pinn.mean():.6f}, u_analytical mean: {u_analytical.mean():.6f}")
+                        # Debug info removed for cleaner output
         
         # Check for very small values and scale if necessary
         if abs(u_pinn.max()) < 1e-6 and abs(u_pinn.min()) < 1e-6:
@@ -1230,8 +1214,7 @@ def generate_wave_simple_plot_with_module(model, t_value, x_min, x_max, plot_typ
         print(f"Debug - Wave plotting:")
         print(f"  X range: [{X.min():.6f}, {X.max():.6f}]")
         print(f"  u_pinn range: [{u_pinn.min():.6f}, {u_pinn.max():.6f}]")
-        print(f"  u_pinn mean: {u_pinn.mean():.6f}")
-        print(f"  u_pinn std: {u_pinn.std():.6f}")
+                        # Debug info removed for cleaner output
         print(f"  u_pinn sample: {u_pinn[:5]}")
         
         # Check for very small values and scale if necessary

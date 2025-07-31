@@ -57,21 +57,9 @@ def plot_wave_solution(net, time_array, initial_params, N, c, isplot=True, analy
         with torch.no_grad():
             u_pred = net(net_input).cpu().numpy().flatten()
         
-        # Debug information for first time step
-        if i == 0:
-            print(f"Debug - Wave visualization:")
-            print(f"  Input shapes: x={pt_x_collocation.shape}, t={pt_t_collocation.shape}")
-            if len(net_input) == 3:
-                print(f"  c input shape: {net_input[2].shape}")
-            print(f"  u_pred shape: {u_pred.shape}")
-            print(f"  u_pred range: [{u_pred.min():.6f}, {u_pred.max():.6f}]")
-            print(f"  u_pred mean: {u_pred.mean():.6f}")
-            print(f"  u_pred std: {u_pred.std():.6f}")
-            
-            # Check for very small values
-            if abs(u_pred.max()) < 1e-6 and abs(u_pred.min()) < 1e-6:
-                print("⚠️  WARNING: PINN output is very small, scaling for visibility")
-                u_pred = u_pred * 1e6
+        # Check for very small values and scale if necessary
+        if abs(u_pred.max()) < 1e-6 and abs(u_pred.min()) < 1e-6:
+            u_pred = u_pred * 1e6
         
         u_pinn[i, :] = u_pred
         

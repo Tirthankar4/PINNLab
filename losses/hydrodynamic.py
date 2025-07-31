@@ -9,7 +9,7 @@ import torch
 from dependency_codes.config import cs, const, rho_o
 from .registry import register_loss
 from .base import diff, mse_loss
-from dependency_codes.solver import fun_rho_0, fun_v_0, func
+from dependency_codes.math_functions import fun_rho_0, fun_v_0, func
 
 @register_loss('hydrodynamical_equations')
 def hydrodynamical_equations_loss(net, model, batch, criterion, params):

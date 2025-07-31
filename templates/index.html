@@ -498,12 +498,9 @@
                         </div>
                     </div>
                     
-                    <div class="form-group-with-desc">
-                        <div class="form-group">
-                            <label for="iteration_lbfgs">L-BFGS Iterations:</label>
-                            <input type="number" id="iteration_lbfgs" name="iteration_lbfgs" value="100" min="0" max="1000">
-                        </div>
-                        <small>Recommended: 100+ for wave equation, 50 for others</small>
+                    <div class="form-group">
+                        <label for="iteration_lbfgs">L-BFGS Iterations:</label>
+                        <input type="number" id="iteration_lbfgs" name="iteration_lbfgs" value="100" min="0" max="1000">
                     </div>
                     
                     <div class="form-group">
@@ -875,13 +872,13 @@
                 document.getElementById('iteration_lbfgs').value = '50';
             } else if (modelType === 'wave') {
                 waveParams.style.display = 'block';
-                // Wave equation optimized defaults with residual connections
-                document.getElementById('num_neurons').value = '128';
-                document.getElementById('main_pinn_layers').value = '6';  // Triggers residual connection
-                document.getElementById('param_embed_layers').value = '3';
-                document.getElementById('param_embed_neurons').value = '64';
-                document.getElementById('input_embed_layers').value = '4';
-                document.getElementById('input_embed_neurons').value = '128';
+                // Wave equation standardized defaults (same as hydro and burgers)
+                document.getElementById('num_neurons').value = '96';
+                document.getElementById('main_pinn_layers').value = '5';
+                document.getElementById('param_embed_layers').value = '2';
+                document.getElementById('param_embed_neurons').value = '32';
+                document.getElementById('input_embed_layers').value = '3';
+                document.getElementById('input_embed_neurons').value = '64';
                 document.getElementById('iteration_adam').value = '1000';
                 document.getElementById('iteration_lbfgs').value = '100';
             }
