@@ -14,12 +14,12 @@ from scipy.interpolate import interp1d
 import os # Added for file existence check
 
 # Import your existing code
-from model_architecture import PINN
+from dependency_codes.model_architecture import PINN
 from models.burgers import BurgersPINN
 from models.hydro import HydroPINN
 from models.wave import WavePINN
 from visualisations import plot_burgers_solution, rel_misfit_burgers, plot_function, rel_misfit, plot_wave_solution, rel_misfit_wave
-from config import xmin, tmin, rho_o
+from dependency_codes.config import xmin, tmin, rho_o
 from analytical_solutions.hydrodynamics import LAX
 from analytical_solutions.wave import wave_analytical_solution_dalembert, wave_initial_condition_sine, wave_initial_condition_gaussian
 
@@ -107,19 +107,29 @@ def load_pretrained_model(model_name):
         # Load model state
         checkpoint = torch.load(model_path, map_location=device)
         
-        # Extract model type and config
-        model_type = checkpoint.get('model_type', model_info['type'])
-        config = checkpoint.get('config', {})
+        # Check if checkpoint is just the state dict or has metadata
+        if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
+            # New format with metadata
+            model_type = checkpoint.get('model_type', model_info['type'])
+            config = checkpoint.get('config', {})
+            state_dict = checkpoint['model_state_dict']
+            use_legacy = False  # New models use new architecture
+        else:
+            # Old format - checkpoint is just the state dict (pretrained models)
+            model_type = model_info['type']
+            config = {}
+            state_dict = checkpoint
+            use_legacy = True  # Pretrained models use legacy architecture
         
-        print(f"Loading {model_type} model with config: {config}")
+        print(f"Loading {model_type} model with config: {config} (legacy: {use_legacy})")
         
         # Create model
-        model = create_new_model(model_type, config)
+        model = create_new_model(model_type, config, use_legacy=use_legacy)
         if model is None:
             return None, f"Failed to create {model_type} model"
         
         # Load state dict
-        model.load_state_dict(checkpoint['model_state_dict'])
+        model.load_state_dict(state_dict)
         model.to(device)
         model.eval()  # Set to evaluation mode
         
@@ -148,9 +158,13 @@ def load_pretrained_model(model_name):
     except Exception as e:
         return None, f"Error loading model: {str(e)}"
 
-def create_new_model(model_type, config):
+def create_new_model(model_type, config, use_legacy=False):
     """Create a new model with custom architecture"""
-    if model_type == 'burgers':
+    if use_legacy:
+        # Use legacy PINN architecture for pretrained models
+        from dependency_codes.model_architecture import PINN
+        model = PINN(num_neurons=config.get('num_neurons', 96))
+    elif model_type == 'burgers':
         model = BurgersPINN(
             num_neurons=config.get('num_neurons', 96),
             param_embed_activation=config.get('param_embed_activation', 'tanh'),
@@ -308,22 +322,22 @@ def train():
         
         # Training configuration
         config = {
-            'num_neurons': int(request.form.get('num_neurons', 128)),  # Larger network for wave
+            'num_neurons': int(request.form.get('num_neurons', 96)),
             'use_param_embedding': request.form.get('use_param_embedding', 'true') == 'true',
             'param_embed_activation': request.form.get('param_embed_activation', 'tanh'),
             'input_embed_activation': request.form.get('input_embed_activation', 'sin'),
             'main_pinn_activation': request.form.get('main_pinn_activation', 'sin'),
-            'param_embed_layers': int(request.form.get('param_embed_layers', 3)),  # More layers
-            'param_embed_neurons': int(request.form.get('param_embed_neurons', 64)),  # More neurons
-            'input_embed_layers': int(request.form.get('input_embed_layers', 4)),  # More layers
-            'input_embed_neurons': int(request.form.get('input_embed_neurons', 128)),  # More neurons
-            'main_pinn_layers': int(request.form.get('main_pinn_layers', 6))  # More layers
+            'param_embed_layers': int(request.form.get('param_embed_layers', 2)),
+            'param_embed_neurons': int(request.form.get('param_embed_neurons', 32)),
+            'input_embed_layers': int(request.form.get('input_embed_layers', 3)),
+            'input_embed_neurons': int(request.form.get('input_embed_neurons', 64)),
+            'main_pinn_layers': int(request.form.get('main_pinn_layers', 5))
         }
         
         # Training hyperparameters
         training_config = {
-            'iteration_adam': int(request.form.get('iteration_adam', 1000)),  # More iterations for wave
-            'iteration_lbfgs': int(request.form.get('iteration_lbfgs', 100)),  # More L-BFGS iterations
+            'iteration_adam': int(request.form.get('iteration_adam', 1000)),
+            'iteration_lbfgs': int(request.form.get('iteration_lbfgs', 100)),
             'learning_rate': float(request.form.get('learning_rate', 0.001)),
             'batch_size': int(request.form.get('batch_size', 1000)),
             'num_batches': int(request.form.get('num_batches', 5))
@@ -359,10 +373,10 @@ def train():
             c_max = float(request.form.get('c_max', 2.0))
             c_N = int(request.form.get('c_N', 5))
             tmax = float(request.form.get('tmax', 1.0))
-            # Domain configuration - use more collocation points for wave equation
-            N_0 = int(request.form.get('N_0', 300))  # More initial condition points
-            N_b = int(request.form.get('N_b', 300))  # More boundary condition points
-            N_r = int(request.form.get('N_r', 3000))  # More residual points
+            # Domain configuration
+            N_0 = int(request.form.get('N_0', 100))
+            N_b = int(request.form.get('N_b', 100))
+            N_r = int(request.form.get('N_r', 1000))
         else:
             return jsonify({'success': False, 'error': f'Unknown model type: {model_type}'})
         
@@ -465,18 +479,19 @@ def train_model_with_progress(training_id, model_type, config, training_config, 
     warnings.filterwarnings("ignore", category=UserWarning, module="torch.nn.modules.loss")
     warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
     
-    from data_generator import alpha_generator
-    from solver import input_taker, req_consts_calc, closure_batched, train_batched_with_progress
+    from dependency_codes.data_generator import alpha_generator
+    from dependency_codes.solver import input_taker, req_consts_calc, closure_batched, train_batched_with_progress
+    import dependency_codes.solver as solver
     from losses.losses import ASTPN
     
     start_time = time.time()
     
     # Set MODEL_TYPE based on model_type for proper loss function selection
-    import config as config_module
+    import dependency_codes.config as config_module
     config_module.MODEL_TYPE = model_type
     
     # Also update MODEL_TYPE in solver module
-    import solver
+    import dependency_codes.solver as solver
     solver.MODEL_TYPE = model_type
     
     print(f"MODEL_TYPE set to {model_type}")
@@ -715,7 +730,7 @@ def generate_hydro_plot_with_comparison(model, t_value, x_min, x_max, plot_type,
         alpha = alpha_value  # Use the alpha value directly
         
         # Calculate parameters exactly like visualisation.py and inference.py
-        from solver import req_consts_calc
+        from dependency_codes.solver import req_consts_calc
         jeans, alpha_val = req_consts_calc(lam)
         v_1 = ((alpha_val/(rho_o*2*np.pi/lam)) * alpha)
         tmax = 2.0
@@ -923,7 +938,7 @@ def generate_hydro_simple_plot(model, t_value, x_min, x_max, plot_type, alpha_va
         pt_t_collocation = Variable(torch.from_numpy(t_).float(), requires_grad=True).to(device)
         
         # Use the same alpha_coor creation as visualisation.py
-        alpha_coor = torch.cuda.FloatTensor([alpha_value]).repeat(res, 1).to(device) if torch.cuda.is_available() else torch.full((res, 1), alpha_value, device=device, dtype=torch.float32)
+        alpha_coor = torch.full((res, 1), alpha_value, device=device, dtype=torch.float32)
         test_coor = [pt_x_collocation, pt_t_collocation, alpha_coor]
         
         with torch.no_grad():

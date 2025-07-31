@@ -2,12 +2,12 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import seaborn as sns
-from model_architecture import PINN
-from data_generator import alpha_generator
+from dependency_codes.model_architecture import PINN
+from dependency_codes.data_generator import alpha_generator
 from losses.losses import ASTPN
-from config import xmin, ymin, tmin, rho_o
+from dependency_codes.config import xmin, ymin, tmin, rho_o
 from visualisations import plot_function, rel_misfit
-from solver import req_consts_calc  # <-- import for jeans and alpha
+from dependency_codes.solver import req_consts_calc  # <-- import for jeans and alpha
 
 # Device setup
 has_gpu = torch.cuda.is_available()

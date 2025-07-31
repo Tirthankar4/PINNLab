@@ -4,13 +4,13 @@ General-purpose domain, collocation, and boundary condition classes for PINN fra
 Contains ASTPN and general boundary condition utilities (e.g., periodic_BC).
 """
 
-from data_generator import col_gen
+from dependency_codes.data_generator import col_gen
 from .base import diff, mse_loss
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-from config import cs, const, G, rho_o
+from dependency_codes.config import cs, const, G, rho_o
 
 class ASTPN(col_gen):
 

@@ -6,9 +6,10 @@ Contains pde_residue_hydro and hydrodynamical_equations_loss.
 
 import numpy as np
 import torch
-from config import cs, const, rho_o
+from dependency_codes.config import cs, const, rho_o
 from .registry import register_loss
 from .base import diff, mse_loss
+from dependency_codes.solver import fun_rho_0, fun_v_0, func
 
 @register_loss('hydrodynamical_equations')
 def hydrodynamical_equations_loss(net, model, batch, criterion, params):
@@ -45,7 +46,6 @@ def hydrodynamical_equations_loss(net, model, batch, criterion, params):
 
     # Forward pass
     net_ic_output = net(net_ic_inputs)
-    from solver import fun_rho_0, fun_v_0, func
 
     rho_0 = fun_rho_0(lam, [x_ic, t_ic], alpha_input)
     vx_0 = fun_v_0(lam, jeans, [x_ic, t_ic], v1_input)

@@ -7,8 +7,9 @@ from tqdm import tqdm
 from losses.losses import ASTPN
 from losses.hydrodynamic import hydrodynamical_equations_loss, pde_residue_hydro
 from losses.burgers import burgers_loss
-from model_architecture import PINN
-from config import cs, const, G, rho_o, MODEL_TYPE
+from dependency_codes.model_architecture import PINN
+from dependency_codes.config import cs, const, G, rho_o, MODEL_TYPE
+import dependency_codes.config as config_module
 
 def input_taker(lam, rho_1, num_of_waves, tmax, N_0, N_b, N_r):
     lam = float(lam)
@@ -287,7 +288,6 @@ def train_batched_with_progress(training_id, net, model, alpha, collocation_doma
             model.debug_print = False
             
         # Update weights based on iteration and model type
-        import config as config_module
         model_type = config_module.MODEL_TYPE
         
         if model_type == 'wave':

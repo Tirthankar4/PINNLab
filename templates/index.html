@@ -400,21 +400,20 @@
             <div class="architecture-config">
                 <h4>Architecture Configuration</h4>
                 <div class="info-box" style="background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
-                    <strong>💡 Residual Connections:</strong> When any network (Main PINN, Parameter Embedding, or Input Embedding) has more than 5 layers, residual connections are automatically added between the first and second-to-last layers, similar to the legacy PINN architecture. This helps with training deeper networks and is especially beneficial for the wave equation.
+                    <strong>💡 Residual Connections:</strong> When any network (Main PINN, Parameter Embedding, or Input Embedding) has more than 5 layers, residual connections are automatically added between the first and second-to-last layers, similar to the legacy PINN architecture. This helps with training deeper networks.
                 </div>
                 <div class="config-group">
                     <div class="form-group-with-desc">
                         <div class="form-group">
                             <label>Main PINN Neurons:</label>
-                            <input type="number" name="num_neurons" id="num_neurons" value="128" min="16" max="512">
+                            <input type="number" name="num_neurons" id="num_neurons" value="96" min="16" max="512">
                         </div>
-                        <small>Recommended: 128+ for wave equation, 96 for others</small>
                     </div>
                     
                     <div class="form-group-with-desc">
                         <div class="form-group">
                             <label>Main PINN Layers:</label>
-                            <input type="number" name="main_pinn_layers" id="main_pinn_layers" value="6" min="1" max="20">
+                            <input type="number" name="main_pinn_layers" id="main_pinn_layers" value="5" min="1" max="20">
                         </div>
                         <small>Residual connections added automatically when > 5 layers</small>
                     </div>
@@ -440,7 +439,7 @@
                     <div class="form-group-with-desc">
                         <div class="form-group">
                             <label>Parameter Embedding Layers:</label>
-                            <input type="number" name="param_embed_layers" id="param_embed_layers" value="3" min="1" max="10">
+                            <input type="number" name="param_embed_layers" id="param_embed_layers" value="2" min="1" max="10">
                         </div>
                         <small>Residual connections added automatically when > 5 layers</small>
                     </div>
@@ -448,9 +447,8 @@
                     <div class="form-group-with-desc">
                         <div class="form-group">
                             <label>Parameter Embedding Neurons:</label>
-                            <input type="number" name="param_embed_neurons" id="param_embed_neurons" value="64" min="8" max="256">
+                            <input type="number" name="param_embed_neurons" id="param_embed_neurons" value="32" min="8" max="256">
                         </div>
-                        <small>Recommended: 64+ for wave equation, 32 for others</small>
                     </div>
                     
                     <div class="form-group">
@@ -466,7 +464,7 @@
                     <div class="form-group-with-desc">
                         <div class="form-group">
                             <label>Input Embedding Layers:</label>
-                            <input type="number" name="input_embed_layers" id="input_embed_layers" value="4" min="1" max="10">
+                            <input type="number" name="input_embed_layers" id="input_embed_layers" value="3" min="1" max="10">
                         </div>
                         <small>Residual connections added automatically when > 5 layers</small>
                     </div>
@@ -474,9 +472,8 @@
                     <div class="form-group-with-desc">
                         <div class="form-group">
                             <label>Input Embedding Neurons:</label>
-                            <input type="number" name="input_embed_neurons" id="input_embed_neurons" value="128" min="16" max="256">
+                            <input type="number" name="input_embed_neurons" id="input_embed_neurons" value="64" min="16" max="256">
                         </div>
-                        <small>Recommended: 128+ for wave equation, 64 for others</small>
                     </div>
                     
                     <div class="form-group">
@@ -499,7 +496,6 @@
                             <label for="iteration_adam">Adam Iterations:</label>
                             <input type="number" id="iteration_adam" name="iteration_adam" value="1000" min="1" max="10000">
                         </div>
-                        <small>Recommended: 1000+ for wave equation, 500 for others</small>
                     </div>
                     
                     <div class="form-group-with-desc">

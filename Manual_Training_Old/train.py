@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 #torch.cuda.empty_cache()
 import time
 
-from data_generator import alpha_generator
-from solver import input_taker, req_consts_calc, closure_batched, train_batched
-from config import xmin, tmin, iteration_adam_1D, iteration_lbgfs_1D
-from config import rho_o
+from dependency_codes.data_generator import alpha_generator
+from dependency_codes.solver import input_taker, req_consts_calc, closure_batched, train_batched
+from dependency_codes.config import xmin, tmin, iteration_adam_1D, iteration_lbgfs_1D
+from dependency_codes.config import rho_o
 from losses.losses import ASTPN
 from models.burgers import BurgersPINN
 from visualisations import plot_function, rel_misfit, plot_burgers_solution, rel_misfit_burgers, rel_misfit_wave
-from config import MODEL_TYPE
+from dependency_codes.config import MODEL_TYPE
 
 # Define or import a true solution function for Burgers' equation:
 def true_solution_fn(x, t, nu):

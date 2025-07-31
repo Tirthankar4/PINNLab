@@ -7,7 +7,7 @@ These are shared by all equation-specific PINN models.
 import torch
 import torch.nn as nn
 import importlib
-from config import PARAM_EMBED_ACTIVATION, INPUT_EMBED_ACTIVATION, MAIN_PINN_ACTIVATION
+from dependency_codes.config import PARAM_EMBED_ACTIVATION, INPUT_EMBED_ACTIVATION, MAIN_PINN_ACTIVATION
 
 class Sin(nn.Module):
     def forward(self, input):
