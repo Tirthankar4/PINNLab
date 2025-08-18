@@ -18,7 +18,7 @@ A simple web application for training and visualizing Physics-Informed Neural Ne
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Tirthankar4/PINNLab
    cd Modular_Code_Files_Running_Final
    ```
 

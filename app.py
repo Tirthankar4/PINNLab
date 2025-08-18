@@ -464,10 +464,33 @@ def train_model_with_progress(training_id, model_type, config, training_config, 
         
         # Hydro parameters: wavelength, Jeans length, velocity
         lam = 7.0  # Default wavelength
-        jeans, alpha_val = req_consts_calc(lam)
-        v_1 = torch.tensor([[0.022]], device=device, dtype=torch.float32)  # Make v_1 a tensor for indexing
-        # Create alpha tensor with correct shape for indexing (needs to be 2D for batch processing)
-        alpha = torch.tensor([[alpha_val]], device=device, dtype=torch.float32)
+        jeans, alpha_const = req_consts_calc(lam)
+
+        # Generate list of parameter values (alpha_list) and corresponding v_1 values
+        alpha_min = float(model_params.get('alpha_min', 0.01))
+        alpha_max = float(model_params.get('alpha_max', 0.1))
+        alpha_N = int(model_params.get('alpha_N', 5))
+
+        if alpha_N <= 1 or abs(alpha_max - alpha_min) < 1e-12:
+            alpha_list = torch.tensor([alpha_min], device=device, dtype=torch.float32).view(-1, 1)
+        else:
+            step = (alpha_max - alpha_min) / max(alpha_N - 1, 1)
+            # Add small epsilon to include alpha_max due to float precision
+            eps = step / 2.0
+            alpha_vals = torch.arange(alpha_min, alpha_max + eps, step, device=device, dtype=torch.float32)
+            if alpha_vals.shape[0] > alpha_N:
+                alpha_vals = alpha_vals[:alpha_N]
+            elif alpha_vals.shape[0] < alpha_N:
+                pad = torch.full((alpha_N - alpha_vals.shape[0],), alpha_max, device=device, dtype=torch.float32)
+                alpha_vals = torch.cat([alpha_vals, pad], dim=0)
+            alpha_list = alpha_vals.view(-1, 1)
+
+        # v_1 = (alpha/(rho_o * 2*pi/lam)) * rho_1, where rho_1 spans alpha_list
+        factor = torch.tensor(alpha_const, device=device, dtype=torch.float32) / (rho_o * 2 * np.pi / lam)
+        v_1 = factor * alpha_list  # Shape (N, 1)
+
+        # Use alpha_list as the parameter set for training (shape (N,1))
+        alpha = alpha_list
         
         # Use hydro-specific training function
         train_function = train_batched_with_progress_hydro

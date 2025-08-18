@@ -961,6 +961,9 @@
                 <button type="button" class="btn-warning" onclick="generatePlot()">Generate Plot</button>
                 <button type="button" onclick="resetForm()">Reset</button>
             </div>
+
+            <!-- Visualization output placed together with parameters -->
+            <div id="plot" style="margin-top: 20px;"></div>
         </div>
         
         <!-- Progress Bar Section -->
@@ -1027,7 +1030,6 @@
             </div>
         </div>
         
-        <div id="plot"></div>
         <div id="error" class="error hidden"></div>
         <div id="success" class="success hidden"></div>
     </div>
@@ -1171,11 +1173,11 @@
             } else if (modelType === 'wave') {
                 waveParams.style.display = 'block';
                 // Wave equation standardized defaults (same as hydro and burgers)
-                updateArchitectureDefaults('96', '5', '2', '32', '3', '64', '1000', '100');
+                updateArchitectureDefaults('96', '5', '2', '32', '3', '64', '500', '50');
             } else if (modelType === 'SHM') {
                 shmParams.style.display = 'block';
                 // SHM defaults (optimized for oscillatory solutions)
-                updateArchitectureDefaults('64', '4', '2', '32', '2', '48', '800', '100');
+                updateArchitectureDefaults('64', '4', '2', '32', '2', '48', '500', '50');
             }
         }
         
@@ -1780,9 +1782,7 @@
                                 'Training stopped by user. Partially trained model may be available.';
                             document.getElementById('success').classList.remove('hidden');
                             
-                            setTimeout(() => {
-                                document.getElementById('progress-section').classList.add('hidden');
-                            }, 3000);
+                            // Keep progress section visible after timeout as well
                         }
                     }, 10000); // 10 second timeout
                     
@@ -1859,10 +1859,7 @@
                             // Update plot type options based on the trained model
                             updatePlotTypeOptions();
                             
-                            // Hide progress bar after a delay
-                            setTimeout(() => {
-                                document.getElementById('progress-section').classList.add('hidden');
-                            }, 3000);
+                            // Keep progress and loss sections visible after completion
                             
                         } else if (data.status === 'stopped' || data.status === 'stopping') {
                             console.log('Training stopped by user');
@@ -1876,10 +1873,7 @@
                                 `Training stopped by user. Partially trained model may be available.`;
                             document.getElementById('success').classList.remove('hidden');
                             
-                            // Hide progress bar after a delay
-                            setTimeout(() => {
-                                document.getElementById('progress-section').classList.add('hidden');
-                            }, 3000);
+                            // Keep progress and loss sections visible after stopping
                             
                         } else if (data.status === 'error') {
                             console.log('Training error');
