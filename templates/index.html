@@ -758,6 +758,10 @@
                         <label>Max Time (tmax):</label>
                         <input type="number" name="tmax" id="tmax_burgers" value="1.0" step="0.1" min="0.1" max="5.0">
                     </div>
+                    <div class="form-group">
+                        <label>X Max (training):</label>
+                        <input type="number" name="xmax_burgers" id="xmax_burgers" value="1.0" step="0.1" min="0.1" max="10.0">
+                    </div>
                     
                     <div class="form-group">
                         <label>Initial Condition Points (N_0):</label>
@@ -817,6 +821,10 @@
                     <div class="form-group">
                         <label>Max Time (tmax):</label>
                         <input type="number" name="tmax" id="tmax_wave" value="1.0" step="0.1" min="0.1" max="5.0">
+                    </div>
+                    <div class="form-group">
+                        <label>X Max (training):</label>
+                        <input type="number" name="xmax_wave" id="xmax_wave" value="1.0" step="0.1" min="0.1" max="10.0">
                     </div>
                     
                     <div class="form-group">
@@ -927,7 +935,7 @@
                 <input type="number" name="alpha" id="alpha" value="0.05" step="0.01" min="0.01" max="0.8">
             </div>
             
-            <div class="parameter-info" id="parameter-info">
+            <div class="parameter-info" id="parameter-info" style="display: none;">
                 <strong>Model Parameters:</strong><br>
                 • <strong>Case 1:</strong> lam=7.0, alpha in [0.01, 0.08]<br>
                 • <strong>Case 2:</strong> lam=7.0, alpha in [0.1, 0.8]<br>
@@ -949,12 +957,7 @@
                     <input type="checkbox" name="show_comparison" id="show_comparison">
                     Show Comparison (LT/FD Solutions)
                 </label>
-                <div id="comparison-info" style="display: none; margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 12px;">
-                    <strong>Comparison Options:</strong><br>
-                    • <strong>Density:</strong> Compare PINN density with analytical/numerical solutions<br>
-                    • <strong>Velocity:</strong> Compare PINN velocity with analytical/numerical solutions<br>
-                    • <strong>All Variables:</strong> Show all variables with comparison plots
-                </div>
+                <div id="comparison-info" style="display: none; margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 12px;"></div>
             </div>
             
             <div style="text-align: center; margin-top: 20px;">
@@ -1089,6 +1092,8 @@
             document.getElementById('pretrained-section').classList.add('hidden');
             document.getElementById('train-section').classList.add('hidden');
             document.getElementById('visualization-section').classList.add('hidden');
+            // Hide pretrained parameter info by default
+            document.getElementById('parameter-info').style.display = 'none';
             
             // Show appropriate section
             if (mode === 'pretrained') {
@@ -1099,6 +1104,8 @@
                 // Set currentModelType to 'hydro' for pretrained models (all are hydrodynamics)
                 currentModelType = 'hydro';
                 updatePlotTypeOptions(); // Update plot type options for hydrodynamics
+                // Show parameter info only for pretrained models
+                document.getElementById('parameter-info').style.display = 'block';
             } else if (mode === 'train') {
                 document.getElementById('train-section').classList.remove('hidden');
                 // Reset currentModelType when entering training mode
@@ -1109,6 +1116,7 @@
             document.getElementById('plot').innerHTML = '';
             document.getElementById('error').classList.add('hidden');
             document.getElementById('success').classList.add('hidden');
+            updateComparisonInfo();
         }
 
         function updateAlphaRange() {
@@ -1128,6 +1136,8 @@
                     <strong>Model Parameters:</strong><br>
                     • <strong>Selected Model:</strong> lam=${params.lam}, alpha in [${params.alpha_min}, ${params.alpha_max}]
                 `;
+                // Ensure parameter info is visible when updating for pretrained models
+                parameterInfo.style.display = 'block';
             }
         }
 
@@ -1179,6 +1189,7 @@
                 // SHM defaults (optimized for oscillatory solutions)
                 updateArchitectureDefaults('64', '4', '2', '32', '2', '48', '500', '50');
             }
+            updateComparisonInfo();
         }
         
         function updateArchitectureDefaults(neurons, layers, paramLayers, paramNeurons, inputLayers, inputNeurons, adamIter, lbfgsIter) {
@@ -1271,7 +1282,8 @@
                 formData.append('nu_min', document.getElementById('nu_min').value);
                 formData.append('nu_max', document.getElementById('nu_max').value);
                 formData.append('nu_N', document.getElementById('nu_N').value);
-                formData.append('tmax', document.getElementById('tmax').value);
+                formData.append('tmax', document.getElementById('tmax_burgers').value);
+                formData.append('xmax', document.getElementById('xmax_burgers').value);
                 formData.append('N_0', document.getElementById('N_0_burgers').value);
                 formData.append('N_b', document.getElementById('N_b_burgers').value);
                 formData.append('N_r', document.getElementById('N_r_burgers').value);
@@ -1280,6 +1292,7 @@
                 formData.append('c_max', document.getElementById('c_max').value);
                 formData.append('c_N', document.getElementById('c_N').value);
                 formData.append('tmax', document.getElementById('tmax_wave').value);
+                formData.append('xmax', document.getElementById('xmax_wave').value);
                 formData.append('N_0', document.getElementById('N_0_wave').value);
                 formData.append('N_b', document.getElementById('N_b_wave').value);
                 formData.append('N_r', document.getElementById('N_r_wave').value);
@@ -1315,6 +1328,7 @@
                     setTimeout(() => {
                         startProgressPolling();
                     }, 500);
+                    updateComparisonInfo();
                 } else {
                     updateProgress(0, `Error: ${data.error}`, 'error');
                     document.getElementById('error').innerHTML = `Error: ${data.error}`;
@@ -1904,6 +1918,8 @@
             document.getElementById('success').classList.add('hidden');
             document.getElementById('show_comparison').checked = false;
             document.getElementById('comparison-info').style.display = 'none';
+            // Hide pretrained parameter info on reset
+            document.getElementById('parameter-info').style.display = 'none';
             
             // Clear progress polling
             if (progressInterval) {
@@ -1969,6 +1985,7 @@
                 xMinField.style.display = 'flex';
                 xMaxField.style.display = 'flex';
             }
+            updateComparisonInfo();
         });
         
         // Function to update plot type options based on current model type
@@ -1998,6 +2015,49 @@
                 xMinField.style.display = 'flex';
                 xMaxField.style.display = 'flex';
             }
+            updateComparisonInfo();
+        }
+
+        // Dynamically update comparison info text per equation
+        function updateComparisonInfo() {
+            const comparisonInfo = document.getElementById('comparison-info');
+            const show = document.getElementById('show_comparison').checked;
+            if (!show) {
+                comparisonInfo.style.display = 'none';
+                return;
+            }
+
+            // Decide current equation context
+            // If in pretrained mode, it's hydrodynamics; if training, use currentModelType or selected model_type
+            let eq = null;
+            if (currentMode === 'pretrained') {
+                eq = 'hydro';
+            } else if (currentMode === 'train') {
+                eq = currentModelType || document.getElementById('model_type').value;
+            }
+
+            let html = '<strong>Comparison Information:</strong><br>';
+            if (eq === 'hydro') {
+                html += '• <strong>Density ρ(x,t):</strong> Matter density contrast in a self-gravitating fluid<br>';
+                html += '• <strong>Velocity v(x,t):</strong> Peculiar velocity associated with the density wave<br>';
+                html += '• <strong>Notes:</strong> The parameter “alpha” controls the density amplitude; comparisons use Lax/FD references when selected.';
+            } else if (eq === 'burgers') {
+                html += '• <strong>u(x,t):</strong> Velocity field of the viscous Burgers equation (nonlinear advection–diffusion)<br>';
+                html += '• <strong>Comparison:</strong> PINN vs analytical solution via Cole–Hopf transform for the chosen initial condition (e.g., sine). Viscosity ν is treated as fixed during visualization.';
+            } else if (eq === 'wave') {
+                html += '• <strong>u(x,t):</strong> Displacement of the 1D wave equation<br>';
+                html += '• <strong>Parameters:</strong> Wave speed c equals the “alpha” slider; default comparison uses a sine-wave initial condition.<br>';
+                html += '• <strong>Comparison:</strong> PINN vs d’Alembert analytical solution.';
+            } else if (eq === 'SHM') {
+                html += '• <strong>x(t):</strong> Displacement of a mass–spring system (SHM)<br>';
+                html += '• <strong>Parameters:</strong> c is the spring constant, ω = √c is the angular frequency.<br>';
+                html += '• <strong>Comparison:</strong> PINN vs analytical solution x(t) = A cos(ωt) + (v₀/ω) sin(ωt).';
+            } else {
+                html += '• Select an equation to view comparison details.';
+            }
+
+            comparisonInfo.innerHTML = html;
+            comparisonInfo.style.display = 'block';
         }
         
         // Initialize training parameters on page load
@@ -2008,12 +2068,7 @@
         
         // Show/hide comparison info when checkbox is toggled
         document.getElementById('show_comparison').addEventListener('change', function() {
-            const comparisonInfo = document.getElementById('comparison-info');
-            if (this.checked) {
-                comparisonInfo.style.display = 'block';
-            } else {
-                comparisonInfo.style.display = 'none';
-            }
+            updateComparisonInfo();
         });
     </script>
 </body>

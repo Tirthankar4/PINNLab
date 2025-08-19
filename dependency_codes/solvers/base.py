@@ -154,38 +154,49 @@ def train_batched_with_progress(training_id, net, model, alpha, collocation_doma
         # Update weights based on iteration and model type
         if model_type == "SHM":
             # SHM has no boundary conditions, so w_BC = 0
-            if i < 200:
+            if i < int(iteration_adam // 5):
                 w_IC, w_BC, w_PDE = 5, 0, 1
-            elif 200 <= i < 400:
+            elif int(iteration_adam // 5) <= i < 2 * int(iteration_adam // 5):
                 w_IC, w_BC, w_PDE = 4, 0, 1
-            elif 400 <= i < 600:
+            elif 2 * int(iteration_adam // 5) <= i < 3 * int(iteration_adam // 5):
                 w_IC, w_BC, w_PDE = 3, 0, 1
-            elif 600 <= i < 800:
+            elif 3 * int(iteration_adam // 5) <= i < 4 * int(iteration_adam // 5):
                 w_IC, w_BC, w_PDE = 2, 0, 1
             else:
                 w_IC, w_BC, w_PDE = 1, 0, 1
         elif model_type == "burgers":
-            if i < 200:
+            if i < int(iteration_adam // 5):
+                w_IC, w_BC, w_PDE = 5, 0, 1
+            elif int(iteration_adam // 5) <= i < 2 * int(iteration_adam // 5):
+                w_IC, w_BC, w_PDE = 4, 0, 1
+            elif 2 * int(iteration_adam // 5) <= i < 3 * int(iteration_adam // 5):
+                w_IC, w_BC, w_PDE = 3, 0, 1
+            elif 3 * int(iteration_adam // 5) <= i < 4 * int(iteration_adam // 5):
+                w_IC, w_BC, w_PDE = 2, 0, 1
+            else:
+                w_IC, w_BC, w_PDE = 1, 0, 1
+        elif model_type == "hydro":
+            if i < int(iteration_adam // 5):
                 w_IC, w_BC, w_PDE = 5, 1, 1
-            elif 200 <= i < 400:
-                w_IC, w_BC, w_PDE = 4, 1, 2
-            elif 400 <= i < 600:
-                w_IC, w_BC, w_PDE = 3, 1, 3
-            elif 600 <= i < 800:
-                w_IC, w_BC, w_PDE = 2, 1, 4
+            elif int(iteration_adam // 5) <= i < 2 * int(iteration_adam // 5):
+                w_IC, w_BC, w_PDE = 4, 1, 1
+            elif 2 * int(iteration_adam // 5) <= i < 3 * int(iteration_adam // 5):
+                w_IC, w_BC, w_PDE = 3, 1, 1
+            elif 3 * int(iteration_adam // 5) <= i < 4 * int(iteration_adam // 5):
+                w_IC, w_BC, w_PDE = 2, 1, 1
             else:
                 w_IC, w_BC, w_PDE = 1, 1, 1
         else:
-            if i < 200:
-                w_IC, w_BC, w_PDE = 10, 1, 1
-            elif 200 <= i < 400:
-                w_IC, w_BC, w_PDE = 9, 1, 1
-            elif 400 <= i < 600:
-                w_IC, w_BC, w_PDE = 8, 1, 1
-            elif 600 <= i < 800:
-                w_IC, w_BC, w_PDE = 7, 1, 1
+            if i < int(iteration_adam // 5):
+                w_IC, w_BC, w_PDE = 5, 0, 1
+            elif int(iteration_adam // 5) <= i < 2 * int(iteration_adam // 5):
+                w_IC, w_BC, w_PDE = 4, 0, 1
+            elif 2 * int(iteration_adam // 5) <= i < 3 * int(iteration_adam // 5):
+                w_IC, w_BC, w_PDE = 3, 0, 1
+            elif 3 * int(iteration_adam // 5) <= i < 4 * int(iteration_adam // 5):
+                w_IC, w_BC, w_PDE = 2, 0, 1
             else:
-                w_IC, w_BC, w_PDE = 6, 1, 1
+                w_IC, w_BC, w_PDE = 1, 0, 1
         
         # Compute loss and update parameters using the equation-specific closure
         loss, ic_loss, bc_loss, pde_loss = closure_batched(
@@ -267,7 +278,7 @@ def train_batched_with_progress(training_id, net, model, alpha, collocation_doma
                 # SHM has no boundary conditions, so w_BC = 0
                 w_IC, w_BC, w_PDE = 1, 0, 1
             elif model_type == "hydro":
-                w_IC, w_BC, w_PDE = 5, 1, 1
+                w_IC, w_BC, w_PDE = 1, 1, 1
             elif model_type == "burgers":
                 w_IC, w_BC, w_PDE = 1, 1, 1
             else:

@@ -152,10 +152,10 @@ def rel_misfit(net, time_array, initial_params, N, nu, num_of_waves, rho_1):
         axes[0][j].tick_params(axis='both', which='major',length=4, width=2)
         axes[0][j].tick_params(axis='both', which='minor',length=2, width=1)
         if alpha < 0.1:
-            limu = 1.3*rho_o
-            liml = .7*rho_o
+            limu = 1.2*rho_o
+            liml = .8*rho_o
         else:
-            limu = 2.8*rho_o
+            limu = 2.0*rho_o
             liml = .1*rho_o
         axes[0][j].set_ylim(liml,limu)
         # Show legend only in last column for 1st row
@@ -201,15 +201,12 @@ def rel_misfit(net, time_array, initial_params, N, nu, num_of_waves, rho_1):
         axes[2][j].tick_params(axis='both', which='minor',length=1, width=1)
         axes[2][j].autoscale(enable=True, axis='y')
         axes[2][j].margins(y=0.8)
-        '''limu = 1.5*v_1
-        liml = .1*v_1
-        axes[2][j].set_ylim(liml,limu)'''
+        limu = 0.1
+        liml = -0.1
+        axes[2][j].set_ylim(liml,limu)
         # Show legend only in last column for 3rd row
         if j == len(time_array)-1:
             axes[2][j].legend(loc='upper right',fancybox=False, shadow=False, ncol=3,fontsize = 10)
-        
-    #     axes[2][j].set_xlim(xmin,xmax)
-    #     axes[2][j].set_ylim(-0.6,0.6)
         
         misfit_v = (v_pred0[:,0]+1 - (v+1))/((v_pred0[:,0]+1 + v+1)/2)*100
         

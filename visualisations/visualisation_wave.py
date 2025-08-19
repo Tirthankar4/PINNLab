@@ -165,20 +165,27 @@ def rel_misfit_wave(net, time_array, initial_params, N, c, analytical_solution_f
         fig, axes = plt.subplots(2, 2, figsize=(15, 12))
         
         # Plot PINN vs Analytical at specific times
-        plot_times = [time_array[0], time_array[len(time_array)//2], time_array[-1]]
+        unique_times = np.unique(np.round(time_array, 6))
+        if unique_times.size >= 3:
+            plot_times = [unique_times[0], unique_times[unique_times.size // 2], unique_times[-1]]
+        else:
+            plot_times = unique_times.tolist()
         colors = ['blue', 'red', 'green']
         
         for i, (t, color) in enumerate(zip(plot_times, colors)):
             t_idx = np.argmin(np.abs(time_array - t))
+            pinn_label = f'PINN t={t:.2f}' if len(plot_times) > 1 else f'PINN (t={t:.2f})'
+            anal_label = f'Analytical t={t:.2f}' if len(plot_times) > 1 else f'Analytical (t={t:.2f})'
+            # Only label the first pair if multiple times to avoid duplicate legend rows
             axes[0, 0].plot(X, u_pinn[t_idx, :], color=color, linewidth=2, 
-                           label=f'PINN t={t:.2f}')
+                           label=pinn_label if i == 0 or len(plot_times) == 1 else None)
             axes[0, 0].plot(X, u_analytical[t_idx, :], color=color, linestyle='--', 
-                           linewidth=2, label=f'Analytical t={t:.2f}')
+                           linewidth=2, label=anal_label if i == 0 or len(plot_times) == 1 else None)
         
         axes[0, 0].set_xlabel('x')
         axes[0, 0].set_ylabel('u(x, t)')
         axes[0, 0].set_title(f'PINN vs Analytical Solution (c={c})')
-        axes[0, 0].legend()
+        axes[0, 0].legend(title='Legend')
         axes[0, 0].grid(True, alpha=0.3)
         
         # Plot relative misfit

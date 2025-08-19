@@ -498,7 +498,8 @@ def train_model_with_progress(training_id, model_type, config, training_config, 
         
     elif model_type == 'burgers':
         # Burgers: spatial domain from xmin to xmax, time from 0 to tmax
-        xmin, xmax = -1.0, 1.0
+        xmax_user = model_params.get('xmax', 1.0)
+        xmin, xmax = -float(xmax_user), float(xmax_user)
         tmax = model_params.get('tmax', 1.0)
         N_0 = model_params.get('N_0', 100)
         N_b = model_params.get('N_b', 100)
@@ -525,7 +526,8 @@ def train_model_with_progress(training_id, model_type, config, training_config, 
         
     elif model_type == 'wave':
         # Wave: spatial domain from xmin to xmax, time from 0 to tmax
-        xmin, xmax = 0.0, 1.0
+        xmax_user = model_params.get('xmax', 1.0)
+        xmin, xmax = 0.0, float(xmax_user)
         tmax = model_params.get('tmax', 1.0)
         N_0 = model_params.get('N_0', 100)
         N_b = model_params.get('N_b', 100)
@@ -769,7 +771,7 @@ def create_simple_plot_from_data(result_data, plot_type, equation_type, time_val
             plt.xlabel('x')
             plt.ylabel('u(x, t)')
             plt.title(f'Burgers Equation Solution at t={time_value}')
-            plt.grid(True, alpha=0.3)
+            plt.grid(True, alpha=0.3)   
             plt.legend()
             
         elif equation_type == 'wave':
@@ -1099,13 +1101,47 @@ def train():
             'num_batches': int(request.form.get('num_batches', 5))
         }
         
-        # Model-specific parameters (simplified for demo)
+        # Model-specific parameters from form with sensible defaults
+        def _get_int(name, default):
+            try:
+                return int(request.form.get(name, default))
+            except Exception:
+                return default
+        def _get_float(name, default):
+            try:
+                return float(request.form.get(name, default))
+            except Exception:
+                return default
+
+        tmax_val = _get_float('tmax', 2.0)
+        # Prefer generic names; fall back to equation-specific field names
+        N_0_val = _get_int('N_0', _get_int('N_0_burgers', _get_int('N_0_wave', 100)))
+        N_b_val = _get_int('N_b', _get_int('N_b_burgers', _get_int('N_b_wave', 100)))
+        N_r_val = _get_int('N_r', _get_int('N_r_burgers', _get_int('N_r_wave', 1000)))
+
+        # Optional spatial xmax for burgers/wave
+        xmax_val = request.form.get('xmax')
+        try:
+            xmax_val = float(xmax_val) if xmax_val is not None else None
+        except Exception:
+            xmax_val = None
+
         model_params = {
-            'tmax': 2.0,
-            'N_0': 100,
-            'N_b': 100,
-            'N_r': 1000
+            'tmax': tmax_val,
+            'N_0': N_0_val,
+            'N_b': N_b_val,
+            'N_r': N_r_val
         }
+        if xmax_val is not None:
+            model_params['xmax'] = xmax_val
+
+        # Hydrodynamics parameter ranges if provided
+        if model_type == 'hydro':
+            model_params.update({
+                'alpha_min': _get_float('alpha_min', 0.01),
+                'alpha_max': _get_float('alpha_max', 0.1),
+                'alpha_N': _get_int('alpha_N', 5)
+            })
         
         # Return training ID immediately so frontend can start polling
         response_data = {
