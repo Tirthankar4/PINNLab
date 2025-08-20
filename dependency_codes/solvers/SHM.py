@@ -34,26 +34,29 @@ def process_batch(batch_size, collocation_domain, collocation_IC, alpha, net, mo
     batch_domain = [collocation_domain[0][domain_indices].requires_grad_(True)]
     batch_ic = [collocation_IC[0][ic_indices].requires_grad_(True)]
 
-    # Prepare batch and params for SHM - always use parameter embedding
+    # Prepare batch and params for SHM
     t_ic = batch_ic[0]
     
     # Initial conditions
     x_ic_true = SHM_initial_condition(t_ic, amplitude=1.0)
     x_t_ic_true = SHM_initial_velocity(t_ic)
     
-    # Always use parameter embedding: c is passed as input to network
-    # Handle both tensor and float inputs for alpha_val
+    # Determine spring constant value (c)
     if hasattr(alpha_val, 'item'):
         c_value = alpha_val.item()
     else:
         c_value = float(alpha_val)
     
-    c_input = torch.full((actual_batch_size, 1), c_value, device=t_ic.device, dtype=t_ic.dtype)
-    
-    # Create single tensors with both time and parameter features
-    # This matches what the loss function expects: [tensor([t, c])]
-    net_ic_inputs = [torch.cat([t_ic, c_input], dim=1)]
-    net_dom_inputs = [torch.cat([batch_domain[0], c_input], dim=1)]
+    # Respect model.use_param_embedding: if False, don't feed c into the network inputs
+    if hasattr(model, 'use_param_embedding') and not model.use_param_embedding:
+        # No parameter embedding: network takes only time as input
+        net_ic_inputs = [t_ic]
+        net_dom_inputs = [batch_domain[0]]
+    else:
+        # Parameter embedding enabled: concatenate [t, c]
+        c_input = torch.full((actual_batch_size, 1), c_value, device=t_ic.device, dtype=t_ic.dtype)
+        net_ic_inputs = [torch.cat([t_ic, c_input], dim=1)]
+        net_dom_inputs = [torch.cat([batch_domain[0], c_input], dim=1)]
     
     batch_dict = {
         'collocation_domain': net_dom_inputs,

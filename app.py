@@ -219,6 +219,7 @@ PRETRAINED_MODELS = {
 
 # Load models into memory
 loaded_models = {}
+loaded_models_info = {}
 
 def load_pretrained_model(model_name):
     """Load a pretrained model from disk"""
@@ -394,6 +395,7 @@ def train_model_with_progress(training_id, model_type, config, training_config, 
     model = create_new_model(model_type, config)
     
     # Import the appropriate solver based on model type
+    training_param_value = None
     if model_type == 'SHM':
         from dependency_codes.solvers.SHM import train_batched_with_progress_SHM
         from dependency_codes.solvers.SHM import process_batch
@@ -430,13 +432,37 @@ def train_model_with_progress(training_id, model_type, config, training_config, 
         
         # Create time coordinates
         t_domain = torch.linspace(0, tmax, N_r, device=device).reshape(-1, 1)
-        t_ic = torch.linspace(0, tmax, N_0, device=device).reshape(-1, 1)
+        # Initial condition should be enforced at t=0 only
+        t_ic = torch.zeros(N_0, 1, device=device)
         
         collocation_domain = [t_domain]
         collocation_IC = [t_ic]
         
-        # SHM parameter: spring constant c
-        alpha = torch.tensor([[0.5]], device=device, dtype=torch.float32)
+        # SHM parameter(s): spring constant c
+        c_single_shm = model_params.get('c_single_shm', None)
+        if c_single_shm is not None:
+            try:
+                c_value_shm = float(c_single_shm)
+            except Exception:
+                c_value_shm = 1.0
+            alpha = torch.tensor([c_value_shm], device=device, dtype=torch.float32).view(-1, 1)
+            training_param_value = float(c_value_shm)
+        else:
+            c_min_shm = float(model_params.get('c_min_shm', 1.0))
+            c_max_shm = float(model_params.get('c_max_shm', 9.0))
+            c_N_shm = int(model_params.get('c_N_shm', 5))
+            if c_N_shm <= 1 or abs(c_max_shm - c_min_shm) < 1e-12:
+                alpha = torch.tensor([c_min_shm], device=device, dtype=torch.float32).view(-1, 1)
+            else:
+                step = (c_max_shm - c_min_shm) / max(c_N_shm - 1, 1)
+                eps = step / 2.0
+                c_vals_shm = torch.arange(c_min_shm, c_max_shm + eps, step, device=device, dtype=torch.float32)
+                if c_vals_shm.shape[0] > c_N_shm:
+                    c_vals_shm = c_vals_shm[:c_N_shm]
+                elif c_vals_shm.shape[0] < c_N_shm:
+                    pad = torch.full((c_N_shm - c_vals_shm.shape[0],), c_max_shm, device=device, dtype=torch.float32)
+                    c_vals_shm = torch.cat([c_vals_shm, pad], dim=0)
+                alpha = c_vals_shm.view(-1, 1)
         
         # Use SHM-specific training function
         train_function = train_batched_with_progress_SHM
@@ -467,23 +493,32 @@ def train_model_with_progress(training_id, model_type, config, training_config, 
         jeans, alpha_const = req_consts_calc(lam)
 
         # Generate list of parameter values (alpha_list) and corresponding v_1 values
-        alpha_min = float(model_params.get('alpha_min', 0.01))
-        alpha_max = float(model_params.get('alpha_max', 0.1))
-        alpha_N = int(model_params.get('alpha_N', 5))
-
-        if alpha_N <= 1 or abs(alpha_max - alpha_min) < 1e-12:
-            alpha_list = torch.tensor([alpha_min], device=device, dtype=torch.float32).view(-1, 1)
+        alpha_single = model_params.get('alpha_single', None)
+        if alpha_single is not None:
+            try:
+                alpha_value = float(alpha_single)
+            except Exception:
+                alpha_value = 0.05
+            alpha_list = torch.tensor([alpha_value], device=device, dtype=torch.float32).view(-1, 1)
+            training_param_value = float(alpha_value)
         else:
-            step = (alpha_max - alpha_min) / max(alpha_N - 1, 1)
-            # Add small epsilon to include alpha_max due to float precision
-            eps = step / 2.0
-            alpha_vals = torch.arange(alpha_min, alpha_max + eps, step, device=device, dtype=torch.float32)
-            if alpha_vals.shape[0] > alpha_N:
-                alpha_vals = alpha_vals[:alpha_N]
-            elif alpha_vals.shape[0] < alpha_N:
-                pad = torch.full((alpha_N - alpha_vals.shape[0],), alpha_max, device=device, dtype=torch.float32)
-                alpha_vals = torch.cat([alpha_vals, pad], dim=0)
-            alpha_list = alpha_vals.view(-1, 1)
+            alpha_min = float(model_params.get('alpha_min', 0.01))
+            alpha_max = float(model_params.get('alpha_max', 0.1))
+            alpha_N = int(model_params.get('alpha_N', 5))
+
+            if alpha_N <= 1 or abs(alpha_max - alpha_min) < 1e-12:
+                alpha_list = torch.tensor([alpha_min], device=device, dtype=torch.float32).view(-1, 1)
+            else:
+                step = (alpha_max - alpha_min) / max(alpha_N - 1, 1)
+                # Add small epsilon to include alpha_max due to float precision
+                eps = step / 2.0
+                alpha_vals = torch.arange(alpha_min, alpha_max + eps, step, device=device, dtype=torch.float32)
+                if alpha_vals.shape[0] > alpha_N:
+                    alpha_vals = alpha_vals[:alpha_N]
+                elif alpha_vals.shape[0] < alpha_N:
+                    pad = torch.full((alpha_N - alpha_vals.shape[0],), alpha_max, device=device, dtype=torch.float32)
+                    alpha_vals = torch.cat([alpha_vals, pad], dim=0)
+                alpha_list = alpha_vals.view(-1, 1)
 
         # v_1 = (alpha/(rho_o * 2*pi/lam)) * rho_1, where rho_1 spans alpha_list
         factor = torch.tensor(alpha_const, device=device, dtype=torch.float32) / (rho_o * 2 * np.pi / lam)
@@ -517,8 +552,31 @@ def train_model_with_progress(training_id, model_type, config, training_config, 
         collocation_IC = [x_ic, t_ic]
         collocation_BC = [x_bc, t_bc]
         
-        # Burgers parameter: viscosity
-        alpha = torch.tensor([[0.01]], device=device, dtype=torch.float32)
+        # Burgers parameter(s): viscosity nu
+        nu_single = model_params.get('nu_single', None)
+        if nu_single is not None:
+            try:
+                nu_value = float(nu_single)
+            except Exception:
+                nu_value = 0.01
+            alpha = torch.tensor([nu_value], device=device, dtype=torch.float32).view(-1, 1)
+            training_param_value = float(nu_value)
+        else:
+            nu_min = float(model_params.get('nu_min', 0.01))
+            nu_max = float(model_params.get('nu_max', 0.05))
+            nu_N = int(model_params.get('nu_N', 5))
+            if nu_N <= 1 or abs(nu_max - nu_min) < 1e-12:
+                alpha = torch.tensor([nu_min], device=device, dtype=torch.float32).view(-1, 1)
+            else:
+                step = (nu_max - nu_min) / max(nu_N - 1, 1)
+                eps = step / 2.0
+                nu_vals = torch.arange(nu_min, nu_max + eps, step, device=device, dtype=torch.float32)
+                if nu_vals.shape[0] > nu_N:
+                    nu_vals = nu_vals[:nu_N]
+                elif nu_vals.shape[0] < nu_N:
+                    pad = torch.full((nu_N - nu_vals.shape[0],), nu_max, device=device, dtype=torch.float32)
+                    nu_vals = torch.cat([nu_vals, pad], dim=0)
+                alpha = nu_vals.view(-1, 1)
         
         # Use burgers-specific training function
         train_function = train_batched_with_progress_burgers
@@ -545,8 +603,31 @@ def train_model_with_progress(training_id, model_type, config, training_config, 
         collocation_IC = [x_ic, t_ic]
         collocation_BC = [x_bc, t_bc]
         
-        # Wave parameter: wave speed
-        alpha = torch.tensor([[1.0]], device=device, dtype=torch.float32)
+        # Wave parameter(s): wave speed c
+        c_single = model_params.get('c_single', None)
+        if c_single is not None:
+            try:
+                c_value = float(c_single)
+            except Exception:
+                c_value = 1.0
+            alpha = torch.tensor([c_value], device=device, dtype=torch.float32).view(-1, 1)
+            training_param_value = float(c_value)
+        else:
+            c_min = float(model_params.get('c_min', 0.5))
+            c_max = float(model_params.get('c_max', 2.0))
+            c_N = int(model_params.get('c_N', 5))
+            if c_N <= 1 or abs(c_max - c_min) < 1e-12:
+                alpha = torch.tensor([c_min], device=device, dtype=torch.float32).view(-1, 1)
+            else:
+                step = (c_max - c_min) / max(c_N - 1, 1)
+                eps = step / 2.0
+                c_vals = torch.arange(c_min, c_max + eps, step, device=device, dtype=torch.float32)
+                if c_vals.shape[0] > c_N:
+                    c_vals = c_vals[:c_N]
+                elif c_vals.shape[0] < c_N:
+                    pad = torch.full((c_N - c_vals.shape[0],), c_max, device=device, dtype=torch.float32)
+                    c_vals = torch.cat([c_vals, pad], dim=0)
+                alpha = c_vals.view(-1, 1)
         
         # Use wave-specific training function
         train_function = train_batched_with_progress_wave
@@ -651,7 +732,9 @@ def train_model_with_progress(training_id, model_type, config, training_config, 
             'training_time_seconds': training_time,
             'model_type': model_type,
             'model_id': model_id,
-            'model_path': model_path
+            'model_path': model_path,
+            'use_param_embedding_requested': config.get('use_param_embedding', True),
+            'param_value': training_param_value
         }
         
         # Our SafeLogger is completely safe
@@ -858,11 +941,11 @@ def generate_hydro_plot_with_comparison(model, t_value, x_min, x_max, plot_type,
         result_data = plot_function(model, time_array, initial_params, N, velocity=True, isplot=False, animation=True)
         return create_simple_plot_from_data(result_data, plot_type, 'hydro', t_value, alpha_value=alpha_value)
 
-def generate_burgers_plot_with_comparison(model, t_value, x_min, x_max, plot_type, show_comparison=False):
+def generate_burgers_plot_with_comparison(model, t_value, x_min, x_max, plot_type, show_comparison=False, nu_value=0.02):
     """Generate plot for Burgers equation using visualization modules"""
     
     N = 1000
-    nu = 0.02  # Default viscosity
+    nu = nu_value  # Use provided viscosity value
     initial_params = (x_min, x_max, t_value, device)  # Use t_value instead of 2.0
     time_array = np.array([t_value])
     
@@ -1020,21 +1103,39 @@ def visualize():
                 'lam': float(request.form.get('lam', 7.0)),
                 'num_of_waves': int(request.form.get('num_of_waves', 2))
             }
+            # Try to retrieve stored embedding info
+            try:
+                info = loaded_models_info.get(model_id, {})
+                model_info['use_param_embedding_requested'] = info.get('use_param_embedding_requested', True)
+                model_info['trained_param_value'] = info.get('param_value', None)
+            except Exception:
+                model_info['use_param_embedding_requested'] = True
+                model_info['trained_param_value'] = None
         
         # Get visualization parameters
         t_value = float(request.form['time'])
         x_min = float(request.form['x_min'])
         x_max = float(request.form['x_max'])
         plot_type = request.form.get('plot_type', 'density')
-        alpha_value = float(request.form.get('alpha', 0.05))  # Get alpha from form
+        # Determine parameter value: if training used single value (embedding disabled), use stored value
+        if 'trained_model_id' in request.form:
+            use_embed_flag = model_info.get('use_param_embedding_requested', True)
+            trained_param = model_info.get('trained_param_value', None)
+            if not use_embed_flag and trained_param is not None:
+                alpha_value = float(trained_param)
+            else:
+                alpha_value = float(request.form.get('alpha', 0.05))
+        else:
+            alpha_value = float(request.form.get('alpha', 0.05))
         
         # Generate plot based on model type
         if model_info['type'] == 'hydro':
             plot_data = generate_hydro_plot_with_comparison(model, t_value, x_min, x_max, 
                                                             plot_type, show_comparison, model_info, alpha_value)
         elif model_info['type'] == 'burgers':
+            nu_val = alpha_value
             plot_data = generate_burgers_plot_with_comparison(model, t_value, x_min, x_max, 
-                                                              plot_type, show_comparison)
+                                                              plot_type, show_comparison, nu_val)
         elif model_info['type'] == 'wave':
             c_value = alpha_value
             plot_data = generate_wave_plot_with_comparison(model, t_value, x_min, x_max, 
@@ -1135,13 +1236,49 @@ def train():
         if xmax_val is not None:
             model_params['xmax'] = xmax_val
 
-        # Hydrodynamics parameter ranges if provided
+        # Collect model-specific parameter inputs
         if model_type == 'hydro':
-            model_params.update({
-                'alpha_min': _get_float('alpha_min', 0.01),
-                'alpha_max': _get_float('alpha_max', 0.1),
-                'alpha_N': _get_int('alpha_N', 5)
-            })
+            if 'alpha_single' in request.form:
+                model_params.update({ 'alpha_single': _get_float('alpha_single', 0.05) })
+            else:
+                model_params.update({
+                    'alpha_min': _get_float('alpha_min', 0.01),
+                    'alpha_max': _get_float('alpha_max', 0.1),
+                    'alpha_N': _get_int('alpha_N', 5)
+                })
+        elif model_type == 'burgers':
+            if 'nu_single' in request.form:
+                model_params.update({ 'nu_single': _get_float('nu_single', 0.02) })
+            else:
+                model_params.update({
+                    'nu_min': _get_float('nu_min', 0.01),
+                    'nu_max': _get_float('nu_max', 0.05),
+                    'nu_N': _get_int('nu_N', 5)
+                })
+        elif model_type == 'wave':
+            if 'c_single' in request.form:
+                model_params.update({ 'c_single': _get_float('c_single', 1.0) })
+            else:
+                model_params.update({
+                    'c_min': _get_float('c_min', 0.5),
+                    'c_max': _get_float('c_max', 2.0),
+                    'c_N': _get_int('c_N', 5)
+                })
+        elif model_type == 'SHM':
+            if 'c_single_shm' in request.form:
+                model_params.update({ 'c_single_shm': _get_float('c_single_shm', 4.0),
+                                      'tmax': _get_float('tmax_shm', tmax_val),
+                                      'N_0': _get_int('N_0_shm', N_0_val),
+                                      'N_r': _get_int('N_r_shm', N_r_val) })
+            else:
+                model_params.update({
+                    'c_min_shm': _get_float('c_min_shm', 1.0),
+                    'c_max_shm': _get_float('c_max_shm', 9.0),
+                    'c_N_shm': _get_int('c_N_shm', 5),
+                    'tmax': _get_float('tmax_shm', tmax_val),
+                    'N_0': _get_int('N_0_shm', N_0_val),
+                    'N_r': _get_int('N_r_shm', N_r_val)
+                })
         
         # Return training ID immediately so frontend can start polling
         response_data = {
@@ -1167,6 +1304,12 @@ def train():
                 # Store the trained model
                 model_id = f"{model_type}_{int(time.time())}"
                 loaded_models[model_id] = model
+                # Track whether embedding was requested and the param used (if single value)
+                loaded_models_info[model_id] = {
+                    'model_type': model_type,
+                    'use_param_embedding_requested': config.get('use_param_embedding', True),
+                    'param_value': training_info.get('param_value')
+                }
                 
                 # Update progress
                 with progress_lock:
@@ -1175,7 +1318,9 @@ def train():
                         'phase': 'completed',
                         'progress': 100,
                         'message': f'{model_type.capitalize()} model trained successfully',
-                        'model_id': model_id
+                        'model_id': model_id,
+                        'use_param_embedding_requested': config.get('use_param_embedding', True),
+                        'param_value': training_info.get('param_value')
                     })
                 
                 # Clean up stop flag

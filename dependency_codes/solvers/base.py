@@ -186,6 +186,17 @@ def train_batched_with_progress(training_id, net, model, alpha, collocation_doma
                 w_IC, w_BC, w_PDE = 2, 1, 1
             else:
                 w_IC, w_BC, w_PDE = 1, 1, 1
+        elif model_type == "wave":
+            if i < int(iteration_adam // 5):
+                w_IC, w_BC, w_PDE = 10, 1, 1
+            elif int(iteration_adam // 5) <= i < 2 * int(iteration_adam // 5):
+                w_IC, w_BC, w_PDE = 7, 1, 1
+            elif 2 * int(iteration_adam // 5) <= i < 3 * int(iteration_adam // 5):
+                w_IC, w_BC, w_PDE = 4, 1, 1
+            elif 3 * int(iteration_adam // 5) <= i < 4 * int(iteration_adam // 5):
+                w_IC, w_BC, w_PDE = 1, 1, 1
+            else:
+                w_IC, w_BC, w_PDE = 1, 1, 1
         else:
             if i < int(iteration_adam // 5):
                 w_IC, w_BC, w_PDE = 5, 0, 1

@@ -695,19 +695,26 @@
                         <input type="number" name="tmax" id="tmax" value="1.5" step="0.1" min="0.5" max="5.0">
                     </div>
                     
-                    <div class="form-group">
+                    <!-- Range inputs (shown when parameter embedding is Yes) -->
+                    <div class="form-group" id="hydro-alpha-min-group">
                         <label>Alpha Min:</label>
                         <input type="number" name="alpha_min" id="alpha_min" value="0.01" step="0.01" min="0.001" max="0.5">
                     </div>
                     
-                    <div class="form-group">
+                    <div class="form-group" id="hydro-alpha-max-group">
                         <label>Alpha Max:</label>
                         <input type="number" name="alpha_max" id="alpha_max" value="0.1" step="0.01" min="0.001" max="0.5">
                     </div>
                     
-                    <div class="form-group">
+                    <div class="form-group" id="hydro-alpha-N-group">
                         <label>Alpha Count:</label>
                         <input type="number" name="alpha_N" id="alpha_N" value="5" min="1" max="20">
+                    </div>
+
+                    <!-- Single value input (shown when parameter embedding is No) -->
+                    <div class="form-group" id="hydro-alpha-single-group" style="display: none;">
+                        <label>Alpha (single value):</label>
+                        <input type="number" name="alpha_single" id="alpha_single" value="0.05" step="0.001" min="0.0001" max="1.0">
                     </div>
                     
                     <div class="form-group">
@@ -732,7 +739,7 @@
                 <div class="config-group">
                     <div class="form-group-with-desc">
                         <div class="form-group">
-                            <label>Viscosity Min:</label>
+                            <label id="nu-min-label">Viscosity Min:</label>
                             <input type="number" name="nu_min" id="nu_min" value="0.01" step="0.001" min="0.001" max="0.1">
                         </div>
                         <small style="color: #666;">Minimum viscosity value for training range (like alpha in hydrodynamics)</small>
@@ -740,7 +747,7 @@
                     
                     <div class="form-group-with-desc">
                         <div class="form-group">
-                            <label>Viscosity Max:</label>
+                            <label id="nu-max-label">Viscosity Max:</label>
                             <input type="number" name="nu_max" id="nu_max" value="0.05" step="0.001" min="0.001" max="0.1">
                         </div>
                         <small style="color: #666;">Maximum viscosity value for training range</small>
@@ -748,10 +755,19 @@
                     
                     <div class="form-group-with-desc">
                         <div class="form-group">
-                            <label>Viscosity Count:</label>
+                            <label id="nu-N-label">Viscosity Count:</label>
                             <input type="number" name="nu_N" id="nu_N" value="5" min="1" max="20">
                         </div>
                         <small style="color: #666;">Number of viscosity values to train on</small>
+                    </div>
+
+                    <!-- Single value input (shown when parameter embedding is No) -->
+                    <div class="form-group-with-desc" id="burgers-nu-single-group" style="display: none;">
+                        <div class="form-group">
+                            <label>Viscosity (single value):</label>
+                            <input type="number" name="nu_single" id="nu_single" value="0.02" step="0.001" min="0.0001" max="1.0">
+                        </div>
+                        <small style="color: #666;">Use a single fixed viscosity value for training</small>
                     </div>
                     
                     <div class="form-group">
@@ -785,7 +801,7 @@
                 <div class="config-group">
                     <div class="form-group-with-desc">
                         <div class="form-group">
-                            <label>Wave Speed Min:</label>
+                            <label id="c-min-label">Wave Speed Min:</label>
                             <input type="number" name="c_min" id="c_min" value="0.5" step="0.1" min="0.1" max="5.0">
                         </div>
                         <small style="color: #666;">Minimum wave speed value for training range (like alpha in hydrodynamics)</small>
@@ -793,7 +809,7 @@
                     
                     <div class="form-group-with-desc">
                         <div class="form-group">
-                            <label>Wave Speed Max:</label>
+                            <label id="c-max-label">Wave Speed Max:</label>
                             <input type="number" name="c_max" id="c_max" value="2.0" step="0.1" min="0.1" max="5.0">
                         </div>
                         <small style="color: #666;">Maximum wave speed value for training range</small>
@@ -801,10 +817,19 @@
                     
                     <div class="form-group-with-desc">
                         <div class="form-group">
-                            <label>Wave Speed Count:</label>
+                            <label id="c-N-label">Wave Speed Count:</label>
                             <input type="number" name="c_N" id="c_N" value="5" min="1" max="20">
                         </div>
                         <small style="color: #666;">Number of wave speed values to train on</small>
+                    </div>
+
+                    <!-- Single value input (shown when parameter embedding is No) -->
+                    <div class="form-group-with-desc" id="wave-c-single-group" style="display: none;">
+                        <div class="form-group">
+                            <label>Wave Speed c (single value):</label>
+                            <input type="number" name="c_single" id="c_single" value="1.0" step="0.1" min="0.01" max="10.0">
+                        </div>
+                        <small style="color: #666;">Use a single fixed wave speed value for training</small>
                     </div>
                     
                     <div class="form-group-with-desc">
@@ -849,7 +874,7 @@
                 <div class="config-group">
                     <div class="form-group-with-desc">
                         <div class="form-group">
-                            <label>Spring Constant Min:</label>
+                            <label id="c-min-shm-label">Spring Constant Min:</label>
                             <input type="number" name="c_min_shm" id="c_min_shm" value="1.0" step="0.1" min="0.1" max="20.0">
                         </div>
                         <small style="color: #666;">Minimum spring constant value for training range (ω = √c)</small>
@@ -857,7 +882,7 @@
                     
                     <div class="form-group-with-desc">
                         <div class="form-group">
-                            <label>Spring Constant Max:</label>
+                            <label id="c-max-shm-label">Spring Constant Max:</label>
                             <input type="number" name="c_max_shm" id="c_max_shm" value="9.0" step="0.1" min="0.1" max="20.0">
                         </div>
                         <small style="color: #666;">Maximum spring constant value for training range</small>
@@ -865,10 +890,19 @@
                     
                     <div class="form-group-with-desc">
                         <div class="form-group">
-                            <label>Spring Constant Count:</label>
+                            <label id="c-N-shm-label">Spring Constant Count:</label>
                             <input type="number" name="c_N_shm" id="c_N_shm" value="5" min="1" max="20">
                         </div>
                         <small style="color: #666;">Number of spring constant values to train on</small>
+                    </div>
+
+                    <!-- Single value input (shown when parameter embedding is No) -->
+                    <div class="form-group-with-desc" id="shm-c-single-group" style="display: none;">
+                        <div class="form-group">
+                            <label>Spring Constant c (single value):</label>
+                            <input type="number" name="c_single_shm" id="c_single_shm" value="4.0" step="0.1" min="0.01" max="100.0">
+                        </div>
+                        <small style="color: #666;">Use a single fixed spring constant value for training</small>
                     </div>
                     
                     <div class="form-group">
@@ -1043,6 +1077,9 @@
         let currentModelType = null;
         let currentTrainingId = null;
         let progressInterval = null;
+        // Track parameter usage of the trained model for visualization
+        let trainedUseParamEmbedding = true;
+        let trainedParamValue = null;
         
         // Chart variables for loss visualization
         let totalLossChart = null;
@@ -1117,6 +1154,12 @@
             document.getElementById('error').classList.add('hidden');
             document.getElementById('success').classList.add('hidden');
             updateComparisonInfo();
+            // Ensure visualization parameter input matches training setup
+            if (mode === 'pretrained') {
+                trainedUseParamEmbedding = true;
+                trainedParamValue = null;
+            }
+            updateVisualizationUI();
         }
 
         function updateAlphaRange() {
@@ -1156,6 +1199,7 @@
                 simplePinnConfig.style.display = 'none';
                 archInfo.innerHTML = '<strong>💡 P2PINN Architecture:</strong> Separate parameter and input embeddings with configurable layers. When any network (Main PINN, Parameter Embedding, or Input Embedding) has more than 5 layers, residual connections are automatically added between the first and second-to-last layers. This helps with training deeper networks.';
             }
+            updateParamEmbeddingUI();
         }
 
         function updateTrainingParams() {
@@ -1190,6 +1234,7 @@
                 updateArchitectureDefaults('64', '4', '2', '32', '2', '48', '500', '50');
             }
             updateComparisonInfo();
+            updateParamEmbeddingUI();
         }
         
         function updateArchitectureDefaults(neurons, layers, paramLayers, paramNeurons, inputLayers, inputNeurons, adamIter, lbfgsIter) {
@@ -1267,39 +1312,57 @@
             formData.append('num_batches', document.getElementById('num_batches').value);
             
             // Model-specific parameters
+            const useEmbedding = (architecture === 'SimplePINN') ? (document.getElementById('use_param_embedding_simple').value === 'true') : (document.getElementById('use_param_embedding').value === 'true');
+
             if (modelType === 'hydro') {
                 formData.append('lam', document.getElementById('lam').value);
                 formData.append('rho_1', document.getElementById('rho_1').value);
                 formData.append('num_of_waves', document.getElementById('num_of_waves').value);
                 formData.append('tmax', document.getElementById('tmax').value);
-                formData.append('alpha_min', document.getElementById('alpha_min').value);
-                formData.append('alpha_max', document.getElementById('alpha_max').value);
-                formData.append('alpha_N', document.getElementById('alpha_N').value);
+                if (useEmbedding) {
+                    formData.append('alpha_min', document.getElementById('alpha_min').value);
+                    formData.append('alpha_max', document.getElementById('alpha_max').value);
+                    formData.append('alpha_N', document.getElementById('alpha_N').value);
+                } else {
+                    formData.append('alpha_single', document.getElementById('alpha_single').value);
+                }
                 formData.append('N_0', document.getElementById('N_0').value);
                 formData.append('N_b', document.getElementById('N_b').value);
                 formData.append('N_r', document.getElementById('N_r').value);
             } else if (modelType === 'burgers') {
-                formData.append('nu_min', document.getElementById('nu_min').value);
-                formData.append('nu_max', document.getElementById('nu_max').value);
-                formData.append('nu_N', document.getElementById('nu_N').value);
+                if (useEmbedding) {
+                    formData.append('nu_min', document.getElementById('nu_min').value);
+                    formData.append('nu_max', document.getElementById('nu_max').value);
+                    formData.append('nu_N', document.getElementById('nu_N').value);
+                } else {
+                    formData.append('nu_single', document.getElementById('nu_single').value);
+                }
                 formData.append('tmax', document.getElementById('tmax_burgers').value);
                 formData.append('xmax', document.getElementById('xmax_burgers').value);
                 formData.append('N_0', document.getElementById('N_0_burgers').value);
                 formData.append('N_b', document.getElementById('N_b_burgers').value);
                 formData.append('N_r', document.getElementById('N_r_burgers').value);
             } else if (modelType === 'wave') {
-                formData.append('c_min', document.getElementById('c_min').value);
-                formData.append('c_max', document.getElementById('c_max').value);
-                formData.append('c_N', document.getElementById('c_N').value);
+                if (useEmbedding) {
+                    formData.append('c_min', document.getElementById('c_min').value);
+                    formData.append('c_max', document.getElementById('c_max').value);
+                    formData.append('c_N', document.getElementById('c_N').value);
+                } else {
+                    formData.append('c_single', document.getElementById('c_single').value);
+                }
                 formData.append('tmax', document.getElementById('tmax_wave').value);
                 formData.append('xmax', document.getElementById('xmax_wave').value);
                 formData.append('N_0', document.getElementById('N_0_wave').value);
                 formData.append('N_b', document.getElementById('N_b_wave').value);
                 formData.append('N_r', document.getElementById('N_r_wave').value);
             } else if (modelType === 'SHM') {
-                formData.append('c_min_shm', document.getElementById('c_min_shm').value);
-                formData.append('c_max_shm', document.getElementById('c_max_shm').value);
-                formData.append('c_N_shm', document.getElementById('c_N_shm').value);
+                if (useEmbedding) {
+                    formData.append('c_min_shm', document.getElementById('c_min_shm').value);
+                    formData.append('c_max_shm', document.getElementById('c_max_shm').value);
+                    formData.append('c_N_shm', document.getElementById('c_N_shm').value);
+                } else {
+                    formData.append('c_single_shm', document.getElementById('c_single_shm').value);
+                }
                 formData.append('tmax_shm', document.getElementById('tmax_shm').value);
                 formData.append('N_0_shm', document.getElementById('N_0_shm').value);
                 formData.append('N_r_shm', document.getElementById('N_r_shm').value);
@@ -1363,6 +1426,7 @@
                     formData.append('num_of_waves', document.getElementById('num_of_waves').value);
                 } else if (currentModelType === 'wave') {
                     // For wave equation, alpha parameter represents wave speed c
+                    // Will override alpha below if embedding disabled
                     formData.append('c', document.getElementById('alpha').value);
                 }
             }
@@ -1370,7 +1434,11 @@
             formData.append('time', document.getElementById('time').value);
             formData.append('x_min', document.getElementById('x_min').value);
             formData.append('x_max', document.getElementById('x_max').value);
-            formData.append('alpha', document.getElementById('alpha').value);
+            // If training used a single fixed parameter, skip sending alpha (backend will use stored value)
+            const skipAlpha = (currentMode === 'train' && currentModel && !trainedUseParamEmbedding);
+            if (!skipAlpha) {
+                formData.append('alpha', document.getElementById('alpha').value);
+            }
             formData.append('plot_type', document.getElementById('plot_type').value);
             formData.append('show_comparison', document.getElementById('show_comparison').checked);
             
@@ -1863,6 +1931,13 @@
                             if (data.model_id) {
                                 currentModel = data.model_id;
                             }
+                            // Capture parameter usage flags for visualization control
+                            if (typeof data.use_param_embedding_requested !== 'undefined') {
+                                trainedUseParamEmbedding = data.use_param_embedding_requested;
+                            } else {
+                                trainedUseParamEmbedding = true;
+                            }
+                            trainedParamValue = (typeof data.param_value !== 'undefined') ? data.param_value : null;
                             
                             // Show success message and visualization section
                             document.getElementById('success').innerHTML = 
@@ -1872,6 +1947,7 @@
                             
                             // Update plot type options based on the trained model
                             updatePlotTypeOptions();
+                            updateVisualizationUI();
                             
                             // Keep progress and loss sections visible after completion
                             
@@ -1986,6 +2062,7 @@
                 xMaxField.style.display = 'flex';
             }
             updateComparisonInfo();
+            updateParamEmbeddingUI();
         });
         
         // Function to update plot type options based on current model type
@@ -2016,7 +2093,108 @@
                 xMaxField.style.display = 'flex';
             }
             updateComparisonInfo();
+            updateVisualizationUI();
         }
+
+        // Helper to check current embedding toggle
+        function getUseParamEmbedding() {
+            const architecture = document.getElementById('architecture').value;
+            if (architecture === 'SimplePINN') {
+                return document.getElementById('use_param_embedding_simple').value === 'true';
+            }
+            return document.getElementById('use_param_embedding').value === 'true';
+        }
+
+        // Disable/hide the visualization parameter if training used a single fixed value
+        function updateVisualizationUI() {
+            const alphaInput = document.getElementById('alpha');
+            if (!alphaInput) return;
+            const alphaGroup = alphaInput.parentElement; // the whole row
+
+            const shouldDisable = (currentMode === 'train' && currentModel && !trainedUseParamEmbedding);
+
+            if (shouldDisable) {
+                if (trainedParamValue !== null && trainedParamValue !== undefined) {
+                    alphaInput.value = trainedParamValue;
+                }
+                alphaInput.disabled = true;
+                alphaGroup.style.display = 'none';
+            } else {
+                alphaInput.disabled = false;
+                alphaGroup.style.display = 'flex';
+            }
+        }
+
+        // Show/hide param range vs single value inputs based on toggle
+        function updateParamEmbeddingUI() {
+            const useEmbedding = getUseParamEmbedding();
+            const modelType = document.getElementById('model_type').value;
+
+            // Hydro
+            const hydroMin = document.getElementById('hydro-alpha-min-group');
+            const hydroMax = document.getElementById('hydro-alpha-max-group');
+            const hydroN = document.getElementById('hydro-alpha-N-group');
+            const hydroSingle = document.getElementById('hydro-alpha-single-group');
+            if (hydroMin && hydroMax && hydroN && hydroSingle) {
+                const showHydro = modelType === 'hydro';
+                hydroMin.style.display = showHydro && useEmbedding ? 'flex' : (showHydro ? 'none' : hydroMin.style.display);
+                hydroMax.style.display = showHydro && useEmbedding ? 'flex' : (showHydro ? 'none' : hydroMax.style.display);
+                hydroN.style.display = showHydro && useEmbedding ? 'flex' : (showHydro ? 'none' : hydroN.style.display);
+                hydroSingle.style.display = showHydro && !useEmbedding ? 'flex' : (showHydro ? 'none' : hydroSingle.style.display);
+            }
+
+            // Burgers
+            const nuMin = document.getElementById('nu_min');
+            const nuMax = document.getElementById('nu_max');
+            const nuN = document.getElementById('nu_N');
+            const burgersSingle = document.getElementById('burgers-nu-single-group');
+            if (nuMin && nuMax && nuN && burgersSingle) {
+                const showBurgers = modelType === 'burgers';
+                const nuMinWrap = nuMin.closest('.form-group-with-desc') || nuMin.parentElement;
+                const nuMaxWrap = nuMax.closest('.form-group-with-desc') || nuMax.parentElement;
+                const nuNWrap = nuN.closest('.form-group-with-desc') || nuN.parentElement;
+                nuMinWrap.style.display = showBurgers && useEmbedding ? 'block' : (showBurgers ? 'none' : nuMinWrap.style.display);
+                nuMaxWrap.style.display = showBurgers && useEmbedding ? 'block' : (showBurgers ? 'none' : nuMaxWrap.style.display);
+                nuNWrap.style.display = showBurgers && useEmbedding ? 'block' : (showBurgers ? 'none' : nuNWrap.style.display);
+                burgersSingle.style.display = showBurgers && !useEmbedding ? 'block' : (showBurgers ? 'none' : burgersSingle.style.display);
+            }
+
+            // Wave
+            const cMin = document.getElementById('c_min');
+            const cMax = document.getElementById('c_max');
+            const cN = document.getElementById('c_N');
+            const waveSingle = document.getElementById('wave-c-single-group');
+            if (cMin && cMax && cN && waveSingle) {
+                const showWave = modelType === 'wave';
+                const cMinWrap = cMin.closest('.form-group-with-desc') || cMin.parentElement;
+                const cMaxWrap = cMax.closest('.form-group-with-desc') || cMax.parentElement;
+                const cNWrap = cN.closest('.form-group-with-desc') || cN.parentElement;
+                cMinWrap.style.display = showWave && useEmbedding ? 'block' : (showWave ? 'none' : cMinWrap.style.display);
+                cMaxWrap.style.display = showWave && useEmbedding ? 'block' : (showWave ? 'none' : cMaxWrap.style.display);
+                cNWrap.style.display = showWave && useEmbedding ? 'block' : (showWave ? 'none' : cNWrap.style.display);
+                waveSingle.style.display = showWave && !useEmbedding ? 'block' : (showWave ? 'none' : waveSingle.style.display);
+            }
+
+            // SHM
+            const cMinShm = document.getElementById('c_min_shm');
+            const cMaxShm = document.getElementById('c_max_shm');
+            const cNShm = document.getElementById('c_N_shm');
+            const shmSingle = document.getElementById('shm-c-single-group');
+            if (cMinShm && cMaxShm && cNShm && shmSingle) {
+                const showShm = modelType === 'SHM';
+                const cMinShmWrap = cMinShm.closest('.form-group-with-desc') || cMinShm.parentElement;
+                const cMaxShmWrap = cMaxShm.closest('.form-group-with-desc') || cMaxShm.parentElement;
+                const cNShmWrap = cNShm.closest('.form-group-with-desc') || cNShm.parentElement;
+                cMinShmWrap.style.display = showShm && useEmbedding ? 'block' : (showShm ? 'none' : cMinShmWrap.style.display);
+                cMaxShmWrap.style.display = showShm && useEmbedding ? 'block' : (showShm ? 'none' : cMaxShmWrap.style.display);
+                cNShmWrap.style.display = showShm && useEmbedding ? 'block' : (showShm ? 'none' : cNShmWrap.style.display);
+                shmSingle.style.display = showShm && !useEmbedding ? 'block' : (showShm ? 'none' : shmSingle.style.display);
+            }
+        }
+
+        // Listen for embedding toggle changes
+        document.getElementById('use_param_embedding').addEventListener('change', updateParamEmbeddingUI);
+        document.getElementById('use_param_embedding_simple').addEventListener('change', updateParamEmbeddingUI);
 
         // Dynamically update comparison info text per equation
         function updateComparisonInfo() {

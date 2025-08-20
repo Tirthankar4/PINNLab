@@ -226,9 +226,6 @@ def rel_misfit(net, time_array, initial_params, N, nu, num_of_waves, rho_1):
         axes[3][0].set_ylabel(r"$\epsilon$ ",fontsize = 18)
         axes[3][j].set_ylim(-10.0, 10.0)
         axes[3][j].set_xlim(xmin,xmax)
-        
-        
-    #plt.savefig(output_folder+'/complete'+str(lam)+'_'+str(num_of_waves)+'_'+str(tmax)+'.png', dpi=500,bbox_inches = 'tight')
 
     plt.show()
  

@@ -52,4 +52,4 @@ A simple web application for training and visualizing Physics-Informed Neural Ne
 - **Burgers Equation**: Basic fluid dynamics
 - **Wave Equation**: Simple wave propagation  
 - **SHM**: Simple harmonic motion
-- **Hydrodynamics**: Basic fluid flow
+- **Hydrodynamics**: Extended GRINN case

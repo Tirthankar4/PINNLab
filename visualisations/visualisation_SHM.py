@@ -192,7 +192,7 @@ def rel_misfit_SHM(net, time_array, initial_params, N, c, analytical_solution_fn
     rms_misfit = np.sqrt(np.mean(rel_misfit**2))
     
     if show:
-        fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+        fig, axes = plt.subplots(1, 2, figsize=(15, 6))
         
         # Plot PINN vs Analytical at specific times
         if len(time_array) == 1:
@@ -206,16 +206,14 @@ def rel_misfit_SHM(net, time_array, initial_params, N, c, analytical_solution_fn
         
         for i, (t, color) in enumerate(zip(plot_times, colors)):
             t_idx = np.argmin(np.abs(time_array - t))
-            axes[0, 0].plot(T, x_pinn[t_idx, :], color=color, linewidth=2, 
-                           label=f'PINN t={t:.2f}')
-            axes[0, 0].plot(T, x_analytical[t_idx, :], color=color, linestyle='--', 
-                           linewidth=2, label=f'Analytical t={t:.2f}')
+            axes[0].plot(T, x_pinn[t_idx, :], color=color, linewidth=2, label=f'PINN t={t:.2f}')
+            axes[0].plot(T, x_analytical[t_idx, :], color=color, linestyle='--', linewidth=2, label=f'Analytical t={t:.2f}')
         
-        axes[0, 0].set_xlabel('t')
-        axes[0, 0].set_ylabel('x(t)')
-        axes[0, 0].set_title(f'PINN vs Analytical SHM Solution (c={c})')
-        axes[0, 0].legend()
-        axes[0, 0].grid(True, alpha=0.3)
+        axes[0].set_xlabel('t')
+        axes[0].set_ylabel('x(t)')
+        axes[0].set_title(f'PINN vs Analytical SHM Solution (c={c})')
+        axes[0].legend()
+        axes[0].grid(True, alpha=0.3)
         
         # Plot relative misfit
         # Ensure proper shapes for contourf: T should be 1D, rel_misfit should be 2D
@@ -223,51 +221,19 @@ def rel_misfit_SHM(net, time_array, initial_params, N, c, analytical_solution_fn
         # For single time point, we need to handle the 1D case properly
         if rel_misfit.shape[0] == 1:
             # Single time point: plot as line instead of contour
-            axes[0, 1].plot(T_1d, rel_misfit[0, :], color='red', linewidth=2)
-            axes[0, 1].set_xlabel('t')
-            axes[0, 1].set_ylabel('Relative Misfit (%)')
-            axes[0, 1].set_title('Relative Misfit at Single Time Point')
+            axes[1].plot(T_1d, rel_misfit[0, :], color='red', linewidth=2)
+            axes[1].set_xlabel('t')
+            axes[1].set_ylabel('Relative Misfit (%)')
+            axes[1].set_title('Relative Misfit at Single Time Point')
         else:
             # Multiple time points: use contourf
-            im = axes[0, 1].contourf(T_1d, time_array, rel_misfit, levels=50, cmap='RdBu_r')
-            axes[0, 1].set_xlabel('t')
-            axes[0, 1].set_ylabel('Target Time')
-            axes[0, 1].set_title('Relative Misfit (%)')
-            plt.colorbar(im, ax=axes[0, 1])
+            im = axes[1].contourf(T_1d, time_array, rel_misfit, levels=50, cmap='RdBu_r')
+            axes[1].set_xlabel('t')
+            axes[1].set_ylabel('Target Time')
+            axes[1].set_title('Relative Misfit (%)')
+            plt.colorbar(im, ax=axes[1])
         
-        # Plot misfit statistics over time
-        if rel_misfit.shape[0] == 1:
-            # Single time point: show statistics as text
-            mean_misfit_time = np.mean(np.abs(rel_misfit))
-            max_misfit_time = np.max(np.abs(rel_misfit))
-            axes[1, 0].text(0.5, 0.5, f'Single Time Point\nMean: {mean_misfit_time:.2f}%\nMax: {max_misfit_time:.2f}%', 
-                           ha='center', va='center', transform=axes[1, 0].transAxes,
-                           fontsize=12, bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.5))
-            axes[1, 0].set_title('Misfit Statistics (Single Time)')
-            axes[1, 0].axis('off')
-        else:
-            # Multiple time points: plot statistics over time
-            mean_misfit_time = np.mean(np.abs(rel_misfit), axis=1)
-            max_misfit_time = np.max(np.abs(rel_misfit), axis=1)
-            
-            axes[1, 0].plot(time_array, mean_misfit_time, 'b-', linewidth=2, label='Mean')
-            axes[1, 0].plot(time_array, max_misfit_time, 'r-', linewidth=2, label='Max')
-            axes[1, 0].set_xlabel('Target Time')
-            axes[1, 0].set_ylabel('Relative Misfit (%)')
-            axes[1, 0].set_title('Misfit Statistics over Target Time')
-            axes[1, 0].legend()
-            axes[1, 0].grid(True, alpha=0.3)
-        
-        # Display statistics
-        stats_text = f'Mean Misfit: {mean_misfit:.2f}%\n'
-        stats_text += f'Max Misfit: {max_misfit:.2f}%\n'
-        stats_text += f'RMS Misfit: {rms_misfit:.2f}%'
-        
-        axes[1, 1].text(0.1, 0.5, stats_text, transform=axes[1, 1].transAxes, 
-                       fontsize=12, verticalalignment='center',
-                       bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
-        axes[1, 1].set_title('Misfit Statistics')
-        axes[1, 1].axis('off')
+        # No extra panels
         
         plt.tight_layout()
         plt.show()
